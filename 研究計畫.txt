@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Symbicort Rapihaler 衛教介入研究 — 電子收案系統</title>
+<style>
+  :root {
+    --primary:#185FA5; --primary-light:#E6F1FB; --primary-dark:#0C447C;
+    --success:#3B6D11; --danger:#A32D2D;
+    --border:#d0cec4; --gray:#F1EFE8;
+    --text:#1a1a18; --text2:#5a5a56;
+    --bg:#f8f7f2; --card:#ffffff;
+    --radius:10px; --radius-sm:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;font-size:14px;background:var(--bg);color:var(--text);min-height:100vh;}
+  .app{max-width:980px;margin:0 auto;padding:1rem;}
+
+  .header{background:var(--primary);color:white;border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+  .header h1{font-size:16px;font-weight:600;margin-bottom:3px;}
+  .header p{font-size:12px;opacity:0.8;}
+  .sync-status{font-size:12px;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,0.2);white-space:nowrap;}
+  .sync-status.ok{background:rgba(255,255,255,0.25);}
+  .sync-status.err{background:rgba(200,50,50,0.5);}
+  .sync-status.loading{background:rgba(255,255,255,0.15);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+  .tabs{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap;}
+  .tab{padding:7px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;}
+  .tab:hover{background:var(--gray);}
+  .tab.active{background:var(--primary);color:white;border-color:var(--primary);}
+
+  .panel{display:none;}.panel.active{display:block;}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;}
+  .card-title{font-size:14px;font-weight:600;margin-bottom:1rem;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  .section-tag{display:inline-block;font-size:11px;font-weight:600;color:var(--primary);background:var(--primary-light);padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+  .part-title{font-size:13px;font-weight:600;color:var(--primary);border-left:3px solid var(--primary);padding-left:8px;margin:1rem 0 8px;}
+
+  .form-row{display:grid;gap:12px;margin-bottom:12px;}
+  .form-row.c2{grid-template-columns:1fr 1fr;}
+  .form-row.c3{grid-template-columns:1fr 1fr 1fr;}
+  .form-row.c4{grid-template-columns:1fr 1fr 1fr 1fr;}
+  .form-group{display:flex;flex-direction:column;gap:4px;}
+  .form-group label{font-size:12px;color:var(--text2);font-weight:500;}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);
+    font-size:13px;background:white;color:var(--text);outline:none;font-family:inherit;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 2px #185FA520;}
+  textarea{resize:vertical;min-height:56px;}
+
+  .steps-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .steps-table th{text-align:left;padding:8px 10px;background:var(--gray);font-weight:600;font-size:11px;border:1px solid var(--border);}
+  .steps-table td{padding:8px 10px;border:1px solid var(--border);vertical-align:middle;line-height:1.4;}
+  .steps-table tr:nth-child(even) td{background:#fafaf7;}
+
+  .rg{display:flex;gap:14px;align-items:center;}
+  .rg label{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;}
+  .rg input[type=radio]{accent-color:var(--primary);width:14px;height:14px;}
+
+  .ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .ai-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--gray);}
+  .ai-card .ai-name{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;}
+  .ai-card .ai-row{display:flex;align-items:center;gap:8px;}
+  .ai-card input{width:70px;}
+
+  .likert-wrap{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:8px;}
+  .likert-head,.likert-row{display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr 1fr 1fr;}
+  .likert-head{background:var(--primary-light);border-bottom:1px solid var(--border);}
+  .lk-h{padding:6px 4px;font-size:11px;font-weight:600;color:var(--primary-dark);text-align:center;display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1.3;border-right:1px solid var(--border);}
+  .lk-h:last-child{border-right:none;}
+  .lk-h.q-head{justify-content:flex-start;padding-left:10px;color:var(--text2);font-weight:500;}
+  .likert-row{border-bottom:1px solid var(--border);}
+  .likert-row:last-child{border-bottom:none;}
+  .likert-row:nth-child(even){background:#fafaf7;}
+  .lk-q{padding:9px 10px;font-size:12px;line-height:1.5;display:flex;align-items:center;border-right:1px solid var(--border);}
+  .lk-c{display:flex;align-items:center;justify-content:center;padding:8px 4px;border-right:1px solid var(--border);}
+  .lk-c:last-child{border-right:none;}
+  .lk-c input[type=radio]{accent-color:var(--primary);width:15px;height:15px;}
+
+  .score-bar{font-size:12px;color:var(--text2);margin-top:8px;padding:6px 10px;background:var(--gray);border-radius:var(--radius-sm);}
+  .score-bar strong{color:var(--text);}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;}
+  .stat-card .val{font-size:28px;font-weight:700;color:var(--primary);}
+  .stat-card .lbl{font-size:11px;color:var(--text2);margin-top:3px;}
+  .stat-card.ctrl .val{color:#3B6D11;}
+
+  .pt-wrap{overflow-x:auto;}
+  .pt{width:100%;border-collapse:collapse;font-size:12px;}
+  .pt th{padding:8px 10px;background:var(--gray);font-weight:600;text-align:left;border:1px solid var(--border);font-size:11px;white-space:nowrap;}
+  .pt td{padding:7px 10px;border:1px solid var(--border);white-space:nowrap;}
+  .pt tr:hover td{background:var(--primary-light);}
+
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .b-exp{background:#B5D4F4;color:#0C447C;}
+  .b-ctrl{background:#C0DD97;color:#27500A;}
+  .b-done{background:#C0DD97;color:#27500A;}
+  .b-pend{background:#E0DED6;color:#5F5E5A;}
+
+  .btn{padding:8px 20px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;background:white;color:var(--text);transition:all 0.15s;font-family:inherit;}
+  .btn:hover{background:var(--gray);}
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-primary{background:var(--primary);color:white;border-color:var(--primary);}
+  .btn-primary:hover{background:var(--primary-dark);}
+  .btn-success{background:var(--success);color:white;border-color:var(--success);}
+  .btn-success:hover{background:#27500A;}
+  .btn-danger{background:var(--danger);color:white;border-color:var(--danger);}
+  .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:1rem;}
+
+  .export-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .export-item{border:1px solid var(--border);border-radius:var(--radius);padding:1rem;background:var(--card);}
+  .export-item h3{font-size:13px;font-weight:600;margin-bottom:6px;}
+  .export-item p{font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5;}
+
+  .info-box{background:var(--primary-light);border:1px solid #B5D4F4;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--primary-dark);margin-bottom:1rem;line-height:1.6;}
+
+  /* 設定畫面 */
+  .setup-card{background:var(--card);border:2px dashed var(--border);border-radius:var(--radius);padding:2rem;text-align:center;margin-bottom:1rem;}
+  .setup-card h2{font-size:16px;font-weight:600;margin-bottom:8px;}
+  .setup-card p{font-size:13px;color:var(--text2);margin-bottom:1.5rem;line-height:1.6;}
+  .setup-input{display:flex;gap:8px;max-width:600px;margin:0 auto;}
+  .setup-input input{flex:1;}
+
+  #toast{position:fixed;bottom:24px;right:24px;padding:10px 20px;border-radius:var(--radius-sm);color:white;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:9999;}
+  #toast.show{opacity:1;}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem;}
+  .modal-bg.hidden{display:none;}
+  .modal{background:white;border-radius:var(--radius);padding:1.5rem;width:100%;max-width:420px;}
+  .modal h2{font-size:15px;font-weight:600;margin-bottom:8px;}
+  .modal p{font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.5;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+
+  @media(max-width:640px){
+    .form-row.c3,.form-row.c4{grid-template-columns:1fr 1fr;}
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .export-grid{grid-template-columns:1fr;}
+    .ai-grid{grid-template-columns:1fr;}
+    .header{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div>
+      <h1>Symbicort Rapihaler 衛教介入研究 — 電子收案系統</h1>
+      <p>收案 100 人（實驗組 50 / 對照組 50）｜M0 收案當天・M1 收案後一個月</p>
+    </div>
+    <div id="sync-status" class="sync-status loading">連線中...</div>
+  </div>
+
+  <!-- 未設定 API 時顯示設定畫面 -->
+  <div id="setup-panel" class="hidden">
+    <div class="setup-card">
+      <h2>⚙️ 第一次使用：請輸入 Apps Script 網址</h2>
+      <p>請依照說明文件完成 Google Apps Script 部署，<br>並將取得的「網頁應用程式網址」貼入下方：</p>
+      <div class="setup-input">
+        <input type="text" id="api-url-input" placeholder="https://script.google.com/macros/s/xxxxx/exec" />
+        <button class="btn btn-primary" onclick="saveApiUrl()">儲存並連線</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="main-content">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('enroll',this)">① 新增收案</div>
+      <div class="tab" onclick="switchTab('m0',this)">② M0 評估</div>
+      <div class="tab" onclick="switchTab('m1',this)">③ M1 回診</div>
+      <div class="tab" onclick="switchTab('dash',this)">④ 收案總覽</div>
+      <div class="tab" onclick="switchTab('export',this)">⑤ 匯出資料</div>
+    </div>
+
+    <!-- ① 新增收案 -->
+    <div id="panel-enroll" class="panel active">
+      <div class="info-box">資料即時同步至 Google Sheets，多台電腦同時使用均可。</div>
+
+      <!-- 收案前預覽：自動編號 + 隨機分組 -->
+      <div class="card" style="border:2px solid var(--primary);">
+        <div class="card-title" style="color:var(--primary);">📋 收案編號 &amp; 分組（系統自動產生）</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:center;">
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">下一位病患編號</div>
+            <div id="next-pid" style="font-size:32px;font-weight:700;color:var(--primary);letter-spacing:2px;">—</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">系統分配組別</div>
+            <div id="next-grp" style="font-size:22px;font-weight:700;">—</div>
+            <div id="next-grp-sub" style="font-size:11px;color:var(--text2);margin-top:2px;"></div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">收案進度</div>
+            <div id="enroll-progress" style="font-size:13px;font-weight:500;"></div>
+            <div style="background:var(--gray);border-radius:4px;height:8px;margin-top:6px;overflow:hidden;">
+              <div id="progress-bar" style="background:var(--primary);height:100%;width:0%;transition:width 0.4s;border-radius:4px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">基本資料登錄</div>
+        <div class="form-row c2">
+          <div class="form-group"><label>M0 收案日期</label><input type="date" id="m0date" /></div>
+        </div>
+        <div class="form-row c4">
+          <div class="form-group"><label>年齡（歲）</label><input type="number" id="age" min="0" max="120" /></div>
+          <div class="form-group"><label>性別</label>
+            <select id="sex"><option value="">請選擇</option><option>男</option><option>女</option></select>
+          </div>
+          <div class="form-group"><label>教育程度</label>
+            <select id="edu"><option value="">請選擇</option><option>小學以下</option><option>國中</option><option>高中（職）</option><option>大專以上</option></select>
+          </div>
+          <div class="form-group"><label>職業類型</label>
+            <select id="job"><option value="">請選擇</option><option>勞力工作者</option><option>辦公／服務業</option><option>無業／退休</option><option>其他</option></select>
+          </div>
+        </div>
+        <div class="form-row c4">
+          <div class="form-group"><label>主觀經濟狀況</label>
+            <select id="ses"><option value="">請選擇</option><option>非常困難</option><option>稍有困難</option><option>普通</option><option>良好</option><option>非常良好</option></select>
+          </div>
+          <div class="form-group"><label>是否獨居</label>
+            <select id="alone"><option value="">請選擇</option><option>是</option><option>否</option></select>
+          </div>
+          <div class="form-group"><label>家庭支持程度</label>
+            <select id="support"><option value="">請選擇</option><option>很少</option><option>一般</option><option>很多</option></select>
+          </div>
+          <div class="form-group"><label>使用智慧型手機</label>
+            <select id="phone"><option value="">請選擇</option><option>是</option><option>否</option></select>
+          </div>
+        </div>
+        <div class="form-row c3">
+          <div class="form-group"><label>自評數位操作能力</label>
+            <select id="digital"><option value="">請選擇</option><option>不熟悉</option><option>普通</option><option>熟練</option></select>
+          </div>
+          <div class="form-group"><label>吸入劑使用經驗</label>
+            <select id="inhaler_exp"><option value="">請選擇</option><option>第一次使用</option><option>曾使用過</option></select>
+          </div>
+          <div class="form-group" style="grid-column:span 1;">
+            <label>居住縣市</label>
+            <select id="county" onchange="onCountyChange()">
+              <option value="">選縣市</option>
+              <option>台北市</option><option>新北市</option><option>桃園市</option>
+              <option>台中市</option><option>台南市</option><option>高雄市</option>
+              <option>基隆市</option><option>新竹市</option><option>嘉義市</option>
+              <option>新竹縣</option><option>苗栗縣</option><option>彰化縣</option>
+              <option>南投縣</option><option>雲林縣</option><option>嘉義縣</option>
+              <option>屏東縣</option><option>宜蘭縣</option><option>花蓮縣</option>
+              <option>台東縣</option><option>澎湖縣</option><option>金門縣</option>
+              <option>連江縣</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row c3" id="township-row" style="display:none;">
+          <div class="form-group">
+            <label>鄉鎮市區（雲林縣）</label>
+            <select id="township">
+              <option value="">選鄉鎮市區</option>
+              <option>斗六市</option><option>斗南鎮</option><option>虎尾鎮</option>
+              <option>西螺鎮</option><option>土庫鎮</option><option>北港鎮</option>
+              <option>古坑鄉</option><option>大埤鄉</option><option>莿桐鄉</option>
+              <option>林內鄉</option><option>二崙鄉</option><option>崙背鄉</option>
+              <option>麥寮鄉</option><option>東勢鄉</option><option>褒忠鄉</option>
+              <option>台西鄉</option><option>元長鄉</option><option>四湖鄉</option>
+              <option>口湖鄉</option><option>水林鄉</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" id="btn-register" onclick="registerPatient()">確認收案 →（系統自動編號分組）</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② M0 -->
+    <div id="panel-m0" class="panel">
+      <div class="card">
+        <div class="card-title">選取病患</div>
+        <div class="form-row c2">
+          <div class="form-group"><label>病患代碼</label>
+            <select id="m0-pid" onchange="onM0PidChange()"><option value="">請選擇已登錄病患</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">甲、AI 判讀模型學習次數記錄</div>
+        <div class="section-tag">四步驟操作學習次數</div>
+        <div class="ai-grid">
+          <div class="ai-card"><div class="ai-name">步驟一：振搖</div><div class="ai-row"><input type="number" id="ai1" min="0" value="0"/><span style="font-size:12px;color:var(--text2);margin-left:4px;">次</span></div></div>
+          <div class="ai-card"><div class="ai-name">步驟二：吐氣</div><div class="ai-row"><input type="number" id="ai2" min="0" value="0"/><span style="font-size:12px;color:var(--text2);margin-left:4px;">次</span></div></div>
+          <div class="ai-card"><div class="ai-name">步驟三：壓吸憋</div><div class="ai-row"><input type="number" id="ai3" min="0" value="0"/><span style="font-size:12px;color:var(--text2);margin-left:4px;">次</span></div></div>
+          <div class="ai-card"><div class="ai-name">步驟四：漱口收集</div><div class="ai-row"><input type="number" id="ai4" min="0" value="0"/><span style="font-size:12px;color:var(--text2);margin-left:4px;">次</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">乙、藥師評估 — Symbicort Rapihaler 操作正確率（M0）</div>
+        <table class="steps-table">
+          <thead><tr><th style="width:38px;">#</th><th>步驟說明</th><th style="width:140px;">評估結果</th></tr></thead>
+          <tbody id="m0-steps-body"></tbody>
+        </table>
+        <div class="score-bar">正確步驟：<strong id="m0-cc">0</strong> / 8　　正確率：<strong id="m0-pct">0%</strong></div>
+      </div>
+      <div class="card">
+        <div class="card-title" id="sat-title">丙、病患衛教滿意度問卷</div>
+        <div id="sat-form"><p style="font-size:13px;color:var(--text2);">請先選取病患以載入對應問卷</p></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-save-m0" onclick="saveM0()">儲存 M0 資料</button>
+      </div>
+    </div>
+
+    <!-- ③ M1 -->
+    <div id="panel-m1" class="panel">
+      <div class="card">
+        <div class="card-title">選取病患（M1 回診）</div>
+        <div class="form-row c2">
+          <div class="form-group"><label>病患代碼</label>
+            <select id="m1-pid"><option value="">請選擇已登錄病患</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">甲、藥師評估 — Symbicort Rapihaler 操作正確率（M1）</div>
+        <table class="steps-table">
+          <thead><tr><th style="width:38px;">#</th><th>步驟說明</th><th style="width:140px;">評估結果</th></tr></thead>
+          <tbody id="m1-steps-body"></tbody>
+        </table>
+        <div class="score-bar">正確步驟：<strong id="m1-cc">0</strong> / 8　　正確率：<strong id="m1-pct">0%</strong></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-save-m1" onclick="saveM1()">儲存 M1 資料</button>
+      </div>
+    </div>
+
+    <!-- ④ 總覽 -->
+    <div id="panel-dash" class="panel">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="val" id="s-total">0</div><div class="lbl">總收案人數</div></div>
+        <div class="stat-card"><div class="val" id="s-exp">0</div><div class="lbl">實驗組 / 50</div></div>
+        <div class="stat-card ctrl"><div class="val" id="s-ctrl">0</div><div class="lbl">對照組 / 50</div></div>
+        <div class="stat-card"><div class="val" id="s-m1">0</div><div class="lbl">M1 完成人數</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>收案名單</span>
+          <button class="btn" style="font-size:12px;padding:4px 12px;" onclick="loadAll()">🔄 重新整理</button>
+        </div>
+        <div class="pt-wrap">
+          <table class="pt">
+            <thead><tr>
+              <th>代碼</th><th>組別</th><th>性別</th><th>年齡</th><th>教育</th>
+              <th>M0日期</th><th>M0正確率</th><th>M1正確率</th><th>M0問卷</th><th>M1狀態</th><th>操作</th>
+            </tr></thead>
+            <tbody id="pt-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ 匯出 -->
+    <div id="panel-export" class="panel">
+      <div class="info-box">資料存於 Google Sheets，以下按鈕從雲端即時抓取最新資料匯出。</div>
+      <div class="card">
+        <div class="card-title">資料匯出（CSV 格式，可直接用 Excel 開啟）</div>
+        <div class="export-grid">
+          <div class="export-item">
+            <h3>① 主要資料表</h3>
+            <p>基本資料（12項）+ AI學習次數 + M0/M1正確率摘要</p>
+            <button class="btn btn-primary" onclick="exportMain()">匯出主要資料.csv</button>
+          </div>
+          <div class="export-item">
+            <h3>② 步驟細項表</h3>
+            <p>M0/M1各步驟逐題（1=正確 / 0=不正確），適合 McNemar 分析</p>
+            <button class="btn btn-primary" onclick="exportSteps()">匯出步驟細項.csv</button>
+          </div>
+        </div>
+        <div class="export-grid">
+          <div class="export-item">
+            <h3>③ 實驗組問卷</h3>
+            <p>語音藥袋 + 系統滿意度 + 衛教滿意度，各部分逐題及總分</p>
+            <button class="btn btn-success" onclick="exportExpSat()">匯出實驗組問卷.csv</button>
+          </div>
+          <div class="export-item">
+            <h3>④ 對照組問卷</h3>
+            <p>衛教滿意度（Q1-5）逐題得分及總分</p>
+            <button class="btn btn-success" onclick="exportCtrlSat()">匯出對照組問卷.csv</button>
+          </div>
+        </div>
+        <div class="export-item">
+          <h3>⑤ 直接開啟 Google Sheets</h3>
+          <p>在 Google Sheets 中查看原始資料，可自行篩選、排序或製作圖表</p>
+          <button class="btn" onclick="openSheets()">開啟 Google Sheets</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 刪除確認 -->
+<div class="modal-bg hidden" id="delete-modal">
+  <div class="modal">
+    <h2>確認刪除</h2>
+    <p id="delete-msg"></p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+// 設定
+// ════════════════════════════════════════
+// ↓↓↓ 部署後填入您的 Apps Script 網址 ↓↓↓
+const API_URL_KEY = 'rapihaler_api_url';
+const SHEETS_URL_KEY = 'rapihaler_sheets_url';
+
+let API_URL = localStorage.getItem(API_URL_KEY) || '';
+let db = {};
+
+// ════════════════════════════════════════
+// 問卷常數
+// ════════════════════════════════════════
+const STEPS = [
+  "拿起吸入器並搖勻（約5秒）",
+  "輕輕擠壓蓋子兩側並把蓋子打開",
+  "緩慢吐氣至肺部空氣排出（不要對著吸嘴）",
+  "將白色吸嘴放入口中對準喉頭，確認嘴唇完整包覆吸嘴且瓶身保持直立",
+  "開始吸氣同時手按壓吸入器頂部的計數器（動作需同步）",
+  "緩慢而深長地吸氣到底，吸入後憋氣約 5-10 秒",
+  "在開始吐氣之前，鬆開手指並將吸入器從嘴巴移開",
+  "（含類固醇藥物）使用後漱口"
+];
+const VOICE_Q = [
+  "我能輕鬆操作語音藥袋模組（例如掃QR CODE、點擊播放網址）",
+  "語音播放的內容清楚易懂",
+  "此語音模組幫助我回想吸入劑使用的正確步驟",
+  "我覺得語音藥袋幫助我更準時或正確使用藥物",
+  "我願意未來繼續使用此語音方式來接收衛教資訊"
+];
+const SYS_Q = [
+  "系統介面操作簡單，容易上手",
+  "操作過程中的語音與動畫說明有助於我學會正確吸入劑使用",
+  "AI回饋系統提供的即時評分讓我清楚知道自己哪裡做錯",
+  "整體互動式衛教方式比傳統方式（例如紙本、單次教學）更有幫助",
+  "我對此系統的整體使用經驗感到滿意"
+];
+const EDU_Q = [
+  "我覺得藥師提供的衛教說明清楚易懂",
+  "衛教內容有幫助我更了解藥物的使用方法與注意事項",
+  "衛教過程中，藥師有耐心傾聽並回答我的問題",
+  "整體衛教時間安排適當，不會太匆忙",
+  "我對這次的衛教整體感到滿意"
+];
+const LIKERT = [{val:5,label:"非常同意"},{val:4,label:"同意"},{val:3,label:"普通"},{val:2,label:"不同意"},{val:1,label:"非常不同意"}];
+
+// ════════════════════════════════════════
+// API 設定
+// ════════════════════════════════════════
+function saveApiUrl() {
+  const url = document.getElementById('api-url-input').value.trim();
+  if (!url.includes('script.google.com')) {
+    showToast('網址格式不正確，請確認是 Apps Script 網址', false);
+    return;
+  }
+  API_URL = url;
+  localStorage.setItem(API_URL_KEY, url);
+  document.getElementById('setup-panel').classList.add('hidden');
+  loadAll();
+}
+
+// ════════════════════════════════════════
+// API 呼叫
+// ════════════════════════════════════════
+async function apiCall(params) {
+  if (!API_URL) throw new Error('尚未設定 API 網址');
+  const url = new URL(API_URL);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const res = await fetch(url.toString());
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return json;
+}
+
+// ════════════════════════════════════════
+// 載入所有資料（含隨機序列）
+// ════════════════════════════════════════
+let blockSequence = null; // 從 Google Sheets 取得的序列
+
+async function loadAll() {
+  setSyncStatus('loading', '同步中...');
+  try {
+    const result = await apiCall({action:'getAll'});
+    db = result.patients || {};
+
+    // 若 Sheets 尚未有序列 → 初始化（只有第一次會執行）
+    if (result.sequence) {
+      blockSequence = result.sequence;
+    } else {
+      const seqResult = await apiCall({action:'initSequence'});
+      blockSequence = seqResult.sequence;
+    }
+
+    setSyncStatus('ok', `已同步 ${Object.keys(db).length} 筆｜${nowTime()}`);
+    refreshSelects();
+    if (document.getElementById('panel-dash').classList.contains('active')) renderDash();
+  } catch(e) {
+    setSyncStatus('err', '連線失敗');
+    showToast('無法連線到 Google Sheets：' + e.message, false);
+  }
+}
+
+function setSyncStatus(type, text) {
+  const el = document.getElementById('sync-status');
+  el.className = 'sync-status ' + type;
+  el.textContent = text;
+}
+
+function nowTime() {
+  return new Date().toLocaleTimeString('zh-Hant',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ════════════════════════════════════════
+// UI helpers
+// ════════════════════════════════════════
+function showToast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = ok ? '#3B6D11' : '#A32D2D';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if (name==='dash') { loadAll().then(renderDash); }
+  if (name==='m0') { buildStepsTable('m0-steps-body','m0'); refreshSelects(); }
+  if (name==='m1') { buildStepsTable('m1-steps-body','m1'); refreshSelects(); }
+}
+
+function setBtn(id, loading) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.textContent = loading ? '儲存中...' : (id==='btn-register'?'建立病患資料 →': id==='btn-save-m0'?'儲存 M0 資料':'儲存 M1 資料');
+}
+
+// ════════════════════════════════════════
+// 步驟表
+// ════════════════════════════════════════
+function buildStepsTable(tbodyId, prefix) {
+  const tb = document.getElementById(tbodyId);
+  tb.innerHTML='';
+  STEPS.forEach((s,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML=`<td style="text-align:center;font-weight:600;color:var(--text2);">${i+1}</td>
+      <td>${s}</td>
+      <td><div class="rg">
+        <label><input type="radio" name="${prefix}_s${i+1}" value="1" onchange="updatePct('${prefix}')" /> ✓ 正確</label>
+        <label><input type="radio" name="${prefix}_s${i+1}" value="0" onchange="updatePct('${prefix}')" /> ✗ 不正確</label>
+      </div></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function updatePct(prefix) {
+  let c=0;
+  for(let i=1;i<=8;i++){const v=document.querySelector(`input[name="${prefix}_s${i}"]:checked`);if(v&&v.value==='1')c++;}
+  document.getElementById(`${prefix}-cc`).textContent=c;
+  document.getElementById(`${prefix}-pct`).textContent=Math.round(c/8*100)+'%';
+}
+
+// ════════════════════════════════════════
+// 問卷
+// ════════════════════════════════════════
+function buildLikert(container, questions, prefix) {
+  const wrap=document.createElement('div'); wrap.className='likert-wrap';
+  const head=document.createElement('div'); head.className='likert-head';
+  head.innerHTML=`<div class="lk-h q-head">問項內容</div>`+
+    LIKERT.map(l=>`<div class="lk-h">${l.val}<br><span style="font-size:10px;">${l.label}</span></div>`).join('');
+  wrap.appendChild(head);
+  questions.forEach((q,qi)=>{
+    const row=document.createElement('div'); row.className='likert-row';
+    row.innerHTML=`<div class="lk-q">${qi+1}. ${q}</div>`+
+      LIKERT.map(l=>`<div class="lk-c"><input type="radio" name="${prefix}_q${qi+1}" value="${l.val}" /></div>`).join('');
+    wrap.appendChild(row);
+  });
+  container.appendChild(wrap);
+  const cw=document.createElement('div'); cw.style.marginTop='8px';
+  cw.innerHTML=`<label style="font-size:12px;color:var(--text2);font-weight:500;display:block;margin-bottom:4px;">其他建議或想法（選填）</label>
+    <textarea id="${prefix}-comment" placeholder="請輸入文字..."></textarea>`;
+  container.appendChild(cw);
+}
+
+function fillLikert(prefix, data, count) {
+  if(!data) return;
+  for(let i=1;i<=count;i++){
+    const v=data[`q${i}`];
+    if(v!=null){const r=document.querySelector(`input[name="${prefix}_q${i}"][value="${v}"]`);if(r)r.checked=true;}
+  }
+  const ce=document.getElementById(`${prefix}-comment`);
+  if(ce&&data.comment) ce.value=data.comment;
+}
+
+function onM0PidChange() {
+  const pid=document.getElementById('m0-pid').value;
+  const p=pid?db[pid]:null;
+  const form=document.getElementById('sat-form');
+  const titleEl=document.getElementById('sat-title');
+  form.innerHTML='';
+  ['ai1','ai2','ai3','ai4'].forEach(id=>document.getElementById(id).value=0);
+
+  if(!p){titleEl.textContent='丙、病患衛教滿意度問卷';form.innerHTML='<p style="font-size:13px;color:var(--text2);">請先選取病患</p>';return;}
+
+  if(p.m0_data){
+    const ai=p.m0_data.ai||{};
+    ['s1','s2','s3','s4'].forEach((s,i)=>document.getElementById(`ai${i+1}`).value=ai[s]||0);
+    const steps=p.m0_data.steps||{};
+    for(let i=1;i<=8;i++){const v=steps[`s${i}`];if(v!=null){const r=document.querySelector(`input[name="m0_s${i}"][value="${v}"]`);if(r)r.checked=true;}}
+    updatePct('m0');
+  }
+
+  if(p.grp==='EXP'){
+    titleEl.textContent='丙、病患衛教滿意度問卷（實驗組）';
+    const t1=document.createElement('div');t1.className='part-title';t1.textContent='第二部分：語音藥袋模組使用經驗';form.appendChild(t1);
+    buildLikert(form,VOICE_Q,'voice');
+    const t2=document.createElement('div');t2.className='part-title';t2.textContent='第三部分：智慧語音衛教系統滿意度';form.appendChild(t2);
+    buildLikert(form,SYS_Q,'sys');
+    const t3=document.createElement('div');t3.className='part-title';t3.textContent='第四部分：衛教滿意度';form.appendChild(t3);
+    buildLikert(form,EDU_Q,'edu');
+    if(p.m0_data?.sat){fillLikert('voice',p.m0_data.sat.voice,VOICE_Q.length);fillLikert('sys',p.m0_data.sat.sys,SYS_Q.length);fillLikert('edu',p.m0_data.sat.edu,EDU_Q.length);}
+  } else {
+    titleEl.textContent='丙、病患衛教滿意度問卷（對照組）';
+    const t1=document.createElement('div');t1.className='part-title';t1.textContent='第二部分：衛教滿意度';form.appendChild(t1);
+    buildLikert(form,EDU_Q,'edu');
+    if(p.m0_data?.sat) fillLikert('edu',p.m0_data.sat.edu,EDU_Q.length);
+  }
+}
+
+function refreshSelects() {
+  const pids=Object.keys(db).sort();
+  ['m0-pid','m1-pid'].forEach(id=>{
+    const sel=document.getElementById(id); const cur=sel.value;
+    sel.innerHTML='<option value="">請選擇已登錄病患</option>';
+    pids.forEach(p=>{
+      const opt=document.createElement('option'); opt.value=p;
+      const g=db[p].grp==='EXP'?'實驗組':'對照組';
+      const m0=db[p].m0_data?' ✓M0':''; const m1=db[p].m1_data?' ✓M1':'';
+      opt.textContent=`${p}（${g}${m0}${m1}）`;
+      sel.appendChild(opt);
+    });
+    if(cur&&db[cur]) sel.value=cur;
+  });
+}
+
+// ════════════════════════════════════════
+// CRUD
+// ════════════════════════════════════════
+// ════════════════════════════════════════
+// 區塊隨機分組（序列存於 Google Sheets，多台電腦共用）
+// ════════════════════════════════════════
+function getNextPidAndGrp() {
+  const total = Object.keys(db).length;
+  if (total >= 100) return null;
+  if (!blockSequence) return null;
+  const n   = total + 1;
+  const pid = 'P' + String(n).padStart(3, '0');
+  const grp = blockSequence[total];
+  return { pid, grp, n };
+}
+
+function updateEnrollPreview() {
+  const next = getNextPidAndGrp();
+  const total = Object.keys(db).length;
+  const expN = Object.values(db).filter(p=>p.grp==='EXP').length;
+  const ctlN = Object.values(db).filter(p=>p.grp==='CTRL').length;
+
+  // 進度條
+  document.getElementById('enroll-progress').textContent = `已收 ${total} / 100 人`;
+  document.getElementById('progress-bar').style.width = (total) + '%';
+
+  if (!next) {
+    document.getElementById('next-pid').textContent = '已完成';
+    document.getElementById('next-grp').textContent = '—';
+    document.getElementById('next-grp-sub').textContent = '收案已達100人上限';
+    return;
+  }
+
+  document.getElementById('next-pid').textContent = next.pid;
+
+  const grpEl = document.getElementById('next-grp');
+  const subEl = document.getElementById('next-grp-sub');
+  if (next.grp === 'EXP') {
+    grpEl.textContent = '實驗組';
+    grpEl.style.color = '#185FA5';
+    subEl.textContent = `目前實驗組 ${expN} 人`;
+  } else {
+    grpEl.textContent = '對照組';
+    grpEl.style.color = '#3B6D11';
+    subEl.textContent = `目前對照組 ${ctlN} 人`;
+  }
+}
+
+async function registerPatient() {
+  const next = getNextPidAndGrp();
+  if (!next) { showToast('收案已達100人上限', false); return; }
+
+  const { pid, grp } = next;
+
+  const record = {
+    pid, grp,
+    m0date: document.getElementById('m0date').value,
+    age: document.getElementById('age').value || null,
+    sex: document.getElementById('sex').value,
+    edu: document.getElementById('edu').value,
+    job: document.getElementById('job').value,
+    ses: document.getElementById('ses').value,
+    alone: document.getElementById('alone').value,
+    support: document.getElementById('support').value,
+    phone: document.getElementById('phone').value,
+    digital: document.getElementById('digital').value,
+    inhaler_exp: document.getElementById('inhaler_exp').value,
+    county: document.getElementById('county').value,
+    township: document.getElementById('township').value,
+    created: new Date().toISOString()
+  };
+
+  setBtn('btn-register', true);
+  try {
+    await apiCall({action:'save', record:JSON.stringify(record)});
+    db[pid] = {...record, m0_data:null, m1_data:null};
+    refreshSelects();
+    // 重設表單
+    document.getElementById('age').value = '';
+    ['sex','edu','job','ses','alone','support','phone','digital','inhaler_exp','county','township'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('township-row').style.display = 'none';
+    document.getElementById('m0date').value = new Date().toISOString().slice(0,10);
+    setSyncStatus('ok', `已同步 ${Object.keys(db).length} 筆｜${nowTime()}`);
+    showToast(`✅ ${pid} 已收案！分配至【${grp==='EXP'?'實驗組':'對照組'}】`);
+    updateEnrollPreview();
+  } catch(e) {
+    showToast('儲存失敗：' + e.message, false);
+  }
+  setBtn('btn-register', false);
+}
+
+
+function getSteps(prefix) {
+  const d={};let c=0;
+  for(let i=1;i<=8;i++){const v=document.querySelector(`input[name="${prefix}_s${i}"]:checked`);d[`s${i}`]=v?parseInt(v.value):null;if(v&&v.value==='1')c++;}
+  d.score=c;d.pct=Math.round(c/8*100);return d;
+}
+
+function getLikert(prefix,count) {
+  const d={};
+  for(let i=1;i<=count;i++){const v=document.querySelector(`input[name="${prefix}_q${i}"]:checked`);d[`q${i}`]=v?parseInt(v.value):null;}
+  const el=document.getElementById(`${prefix}-comment`);d.comment=el?el.value:'';return d;
+}
+
+async function saveM0() {
+  const pid=document.getElementById('m0-pid').value;
+  if(!pid){showToast('請選取病患',false);return;}
+  const p=db[pid];
+  const ai={s1:parseInt(document.getElementById('ai1').value)||0,s2:parseInt(document.getElementById('ai2').value)||0,s3:parseInt(document.getElementById('ai3').value)||0,s4:parseInt(document.getElementById('ai4').value)||0};
+  const steps=getSteps('m0');
+  let sat={};
+  if(p.grp==='EXP'){sat.voice=getLikert('voice',VOICE_Q.length);sat.sys=getLikert('sys',SYS_Q.length);sat.edu=getLikert('edu',EDU_Q.length);}
+  else{sat.edu=getLikert('edu',EDU_Q.length);}
+  const m0_data={ai,steps,sat,saved:new Date().toISOString()};
+
+  setBtn('btn-save-m0',true);
+  try {
+    await apiCall({action:'updateM0',pid,m0_data:JSON.stringify(m0_data)});
+    db[pid].m0_data=m0_data;
+    refreshSelects();
+    setSyncStatus('ok',`已同步｜${nowTime()}`);
+    showToast(`M0 資料已儲存：${pid}（正確率 ${steps.pct}%）`);
+  } catch(e){showToast('儲存失敗：'+e.message,false);}
+  setBtn('btn-save-m0',false);
+}
+
+async function saveM1() {
+  const pid=document.getElementById('m1-pid').value;
+  if(!pid){showToast('請選取病患',false);return;}
+  const steps=getSteps('m1');
+  const m1_data={steps,saved:new Date().toISOString()};
+
+  setBtn('btn-save-m1',true);
+  try {
+    await apiCall({action:'updateM1',pid,m1_data:JSON.stringify(m1_data)});
+    db[pid].m1_data=m1_data;
+    refreshSelects();
+    setSyncStatus('ok',`已同步｜${nowTime()}`);
+    showToast(`M1 資料已儲存：${pid}（正確率 ${steps.pct}%）`);
+  } catch(e){showToast('儲存失敗：'+e.message,false);}
+  setBtn('btn-save-m1',false);
+}
+
+// ════════════════════════════════════════
+// 總覽
+// ════════════════════════════════════════
+function renderDash() {
+  const pats=Object.values(db);
+  document.getElementById('s-total').textContent=pats.length;
+  document.getElementById('s-exp').textContent=pats.filter(p=>p.grp==='EXP').length;
+  document.getElementById('s-ctrl').textContent=pats.filter(p=>p.grp==='CTRL').length;
+  document.getElementById('s-m1').textContent=pats.filter(p=>p.m1_data).length;
+  const tb=document.getElementById('pt-body');tb.innerHTML='';
+  pats.sort((a,b)=>a.pid.localeCompare(b.pid)).forEach(p=>{
+    const m0p=p.m0_data?p.m0_data.steps.pct+'%':'—';
+    const m1p=p.m1_data?p.m1_data.steps.pct+'%':'—';
+    const satD=p.m0_data?`<span class="badge b-done">完成</span>`:`<span class="badge b-pend">未完成</span>`;
+    const m1D=p.m1_data?`<span class="badge b-done">完成</span>`:`<span class="badge b-pend">待回診</span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><strong>${p.pid}</strong></td>
+      <td><span class="badge ${p.grp==='EXP'?'b-exp':'b-ctrl'}">${p.grp==='EXP'?'實驗組':'對照組'}</span></td>
+      <td>${p.sex||'—'}</td><td>${p.age||'—'}</td><td>${p.edu||'—'}</td>
+      <td>${p.county||p.area||'—'}</td><td>${p.township||'—'}</td>
+      <td>${p.m0date||'—'}</td><td>${m0p}</td><td>${m1p}</td><td>${satD}</td><td>${m1D}</td>
+      <td><button class="btn" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger);" onclick="askDelete('${p.pid}')">刪除</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ════════════════════════════════════════
+// 刪除
+// ════════════════════════════════════════
+let pendingPid=null;
+function askDelete(pid){pendingPid=pid;document.getElementById('delete-msg').textContent=`確定要刪除病患「${pid}」的所有資料嗎？此操作無法復原。`;document.getElementById('delete-modal').classList.remove('hidden');}
+function closeModal(){pendingPid=null;document.getElementById('delete-modal').classList.add('hidden');}
+async function confirmDelete(){
+  if(!pendingPid)return;
+  try{await apiCall({action:'delete',pid:pendingPid});delete db[pendingPid];renderDash();refreshSelects();showToast(`已刪除 ${pendingPid}`);}
+  catch(e){showToast('刪除失敗：'+e.message,false);}
+  closeModal();
+}
+
+// ════════════════════════════════════════
+// 匯出
+// ════════════════════════════════════════
+function dlCSV(fn,rows){
+  const csv=rows.map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();
+}
+function onCountyChange() {
+  const county = document.getElementById('county').value;
+  const row = document.getElementById('township-row');
+  const ts = document.getElementById('township');
+  if (county === '雲林縣') {
+    row.style.display = '';
+    ts.value = '';
+  } else {
+    row.style.display = 'none';
+    ts.value = '';
+  }
+}
+
+function today(){return new Date().toISOString().slice(0,10).replace(/-/g,'');}
+
+function exportMain(){
+  const h=['PID','Group','Sex','Age','Education','Occupation','SES','Alone','Family_Support','Smartphone','Digital_Skill','Inhaler_Experience','County','Township','M0_Date','AI_S1','AI_S2','AI_S3','AI_S4','M0_Score','M0_Pct','M1_Score','M1_Pct'];
+  const rows=[h];
+  Object.values(db).sort((a,b)=>a.pid.localeCompare(b.pid)).forEach(p=>{
+    rows.push([p.pid,p.grp,p.sex,p.age,p.edu,p.job,p.ses,p.alone,p.support,p.phone,p.digital,p.inhaler_exp,p.county||p.area||'',p.township||'',p.m0date,
+      p.m0_data?.ai?.s1??'',p.m0_data?.ai?.s2??'',p.m0_data?.ai?.s3??'',p.m0_data?.ai?.s4??'',
+      p.m0_data?.steps?.score??'',p.m0_data?.steps?.pct??'',p.m1_data?.steps?.score??'',p.m1_data?.steps?.pct??'']);
+  });
+  dlCSV('主要資料表_'+today()+'.csv',rows);showToast('主要資料已匯出');
+}
+
+function exportSteps(){
+  const h=['PID','Group',...Array.from({length:8},(_,i)=>`M0_S${i+1}`),'M0_Score','M0_Pct',...Array.from({length:8},(_,i)=>`M1_S${i+1}`),'M1_Score','M1_Pct'];
+  const rows=[h];
+  Object.values(db).sort((a,b)=>a.pid.localeCompare(b.pid)).forEach(p=>{
+    const m0s=Array.from({length:8},(_,i)=>p.m0_data?.steps?.[`s${i+1}`]??'');
+    const m1s=Array.from({length:8},(_,i)=>p.m1_data?.steps?.[`s${i+1}`]??'');
+    rows.push([p.pid,p.grp,...m0s,p.m0_data?.steps?.score??'',p.m0_data?.steps?.pct??'',...m1s,p.m1_data?.steps?.score??'',p.m1_data?.steps?.pct??'']);
+  });
+  dlCSV('步驟細項_'+today()+'.csv',rows);showToast('步驟細項已匯出');
+}
+
+function exportExpSat(){
+  const vH=Array.from({length:5},(_,i)=>`VOICE_Q${i+1}`);
+  const sH=Array.from({length:5},(_,i)=>`SYS_Q${i+1}`);
+  const eH=Array.from({length:5},(_,i)=>`EDU_Q${i+1}`);
+  const rows=[['PID',...vH,'VOICE_Total','VOICE_Comment',...sH,'SYS_Total','SYS_Comment',...eH,'EDU_Total','EDU_Comment']];
+  Object.values(db).filter(p=>p.grp==='EXP').sort((a,b)=>a.pid.localeCompare(b.pid)).forEach(p=>{
+    const v=p.m0_data?.sat?.voice||{},s=p.m0_data?.sat?.sys||{},e=p.m0_data?.sat?.edu||{};
+    const vV=Array.from({length:5},(_,i)=>v[`q${i+1}`]??'');
+    const sV=Array.from({length:5},(_,i)=>s[`q${i+1}`]??'');
+    const eV=Array.from({length:5},(_,i)=>e[`q${i+1}`]??'');
+    const sum=arr=>arr.filter(x=>x!=='').reduce((a,b)=>a+(b||0),0)||'';
+    rows.push([p.pid,...vV,sum(vV),v.comment||'',...sV,sum(sV),s.comment||'',...eV,sum(eV),e.comment||'']);
+  });
+  dlCSV('實驗組問卷_'+today()+'.csv',rows);showToast('實驗組問卷已匯出');
+}
+
+function exportCtrlSat(){
+  const eH=Array.from({length:5},(_,i)=>`EDU_Q${i+1}`);
+  const rows=[['PID',...eH,'EDU_Total','EDU_Comment']];
+  Object.values(db).filter(p=>p.grp==='CTRL').sort((a,b)=>a.pid.localeCompare(b.pid)).forEach(p=>{
+    const e=p.m0_data?.sat?.edu||{};
+    const eV=Array.from({length:5},(_,i)=>e[`q${i+1}`]??'');
+    const eT=eV.filter(x=>x!=='').reduce((a,b)=>a+(b||0),0)||'';
+    rows.push([p.pid,...eV,eT,e.comment||'']);
+  });
+  dlCSV('對照組問卷_'+today()+'.csv',rows);showToast('對照組問卷已匯出');
+}
+
+function openSheets(){
+  const url=localStorage.getItem(SHEETS_URL_KEY);
+  if(url) window.open(url,'_blank');
+  else {
+    const sid=prompt('請輸入 Google Sheets 試算表 ID（網址中間那串）：');
+    if(sid){const u='https://docs.google.com/spreadsheets/d/'+sid+'/edit';localStorage.setItem(SHEETS_URL_KEY,u);window.open(u,'_blank');}
+  }
+}
+
+// ════════════════════════════════════════
+// 初始化
+// ════════════════════════════════════════
+buildStepsTable('m0-steps-body','m0');
+buildStepsTable('m1-steps-body','m1');
+document.getElementById('m0date').value=new Date().toISOString().slice(0,10);
+
+if(!API_URL){
+  document.getElementById('setup-panel').classList.remove('hidden');
+  setSyncStatus('err','尚未設定');
+  updateEnrollPreview();
+} else {
+  loadAll().then(()=>{ updateEnrollPreview(); });
+}
+</script>
+</body>
+</html>
