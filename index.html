@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Symbicort Rapihaler 衛教介入研究 — 電子收案系統</title>
+<title>研究計畫 Symbicort Rapihaler 電子收案系統</title>
 <style>
   :root {
     --primary:#185FA5; --primary-light:#E6F1FB; --primary-dark:#0C447C;
@@ -150,7 +150,7 @@
 
   <div class="header">
     <div>
-      <h1>Symbicort Rapihaler 衛教介入研究 — 電子收案系統</h1>
+      <h1>研究計畫 Symbicort Rapihaler 電子收案系統</h1>
       <p>收案 100 人（實驗組 50 / 對照組 50）｜M0 收案當天・M1 收案後一個月</p>
     </div>
     <div id="sync-status" class="sync-status loading">連線中...</div>
@@ -355,7 +355,7 @@
           <table class="pt">
             <thead><tr>
               <th>代碼</th><th>組別</th><th>性別</th><th>年齡</th><th>教育</th>
-              <th>M0日期</th><th>M0正確率</th><th>M1正確率</th><th>M0問卷</th><th>M1狀態</th><th>操作</th>
+              <th>縣市</th><th>鄉鎮</th><th>M0日期</th><th>M0正確率</th><th>M1正確率</th><th>M0問卷</th><th>M1狀態</th><th>操作</th>
             </tr></thead>
             <tbody id="pt-body"></tbody>
           </table>
@@ -799,6 +799,22 @@ async function saveM0() {
 async function saveM1() {
   const pid=document.getElementById('m1-pid').value;
   if(!pid){showToast('請選取病患',false);return;}
+
+  // ── 檢查 M0→M1 間隔是否滿 21 天 ──────────────────────────
+  const p = db[pid];
+  if(p && p.m0date) {
+    const m0 = new Date(String(p.m0date).slice(0,10));
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    m0.setHours(0,0,0,0);
+    const diffDays = Math.floor((today - m0) / (1000*60*60*24));
+    if(diffDays < 21) {
+      const remain = 21 - diffDays;
+      showToast(`⚠ M0→M1 間隔未滿 21 天（目前第 ${diffDays} 天，還需 ${remain} 天）`, false);
+      return;
+    }
+  }
+
   const steps=getSteps('m1');
   const m1_data={steps,saved:new Date().toISOString()};
 
@@ -828,12 +844,14 @@ function renderDash() {
     const m1p=p.m1_data?p.m1_data.steps.pct+'%':'—';
     const satD=p.m0_data?`<span class="badge b-done">完成</span>`:`<span class="badge b-pend">未完成</span>`;
     const m1D=p.m1_data?`<span class="badge b-done">完成</span>`:`<span class="badge b-pend">待回診</span>`;
+    // 格式化 M0 日期：只顯示 YYYY-MM-DD
+    const m0date = p.m0date ? String(p.m0date).slice(0,10) : '—';
     const tr=document.createElement('tr');
     tr.innerHTML=`<td><strong>${p.pid}</strong></td>
       <td><span class="badge ${p.grp==='EXP'?'b-exp':'b-ctrl'}">${p.grp==='EXP'?'實驗組':'對照組'}</span></td>
       <td>${p.sex||'—'}</td><td>${p.age||'—'}</td><td>${p.edu||'—'}</td>
       <td>${p.county||p.area||'—'}</td><td>${p.township||'—'}</td>
-      <td>${p.m0date||'—'}</td><td>${m0p}</td><td>${m1p}</td><td>${satD}</td><td>${m1D}</td>
+      <td>${m0date}</td><td>${m0p}</td><td>${m1p}</td><td>${satD}</td><td>${m1D}</td>
       <td><button class="btn" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger);" onclick="askDelete('${p.pid}')">刪除</button></td>`;
     tb.appendChild(tr);
   });
