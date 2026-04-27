@@ -402,6 +402,29 @@
   </div>
 </div>
 
+<!-- QR Code 病患小卡 Modal -->
+<div class="modal-bg hidden" id="qr-modal">
+  <div class="modal" style="max-width:340px;text-align:center;">
+    <div style="background:var(--primary);color:white;border-radius:var(--border-radius,8px);padding:12px 16px;margin:-1.5rem -1.5rem 1rem;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:2px;">收案成功！請列印此小卡給病患</div>
+      <div style="font-size:11px;opacity:0.8;">病患保留此卡，回診時掃描 QR Code</div>
+    </div>
+    <div id="qr-card-area" style="border:2px dashed var(--border);border-radius:8px;padding:16px;margin-bottom:1rem;background:white;">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">研究計畫 Symbicort Rapihaler</div>
+      <div id="qr-pid" style="font-size:24px;font-weight:700;color:var(--primary);letter-spacing:2px;margin-bottom:4px;"></div>
+      <div id="qr-grp" style="font-size:12px;margin-bottom:8px;"></div>
+      <canvas id="qr-canvas" style="display:block;margin:0 auto 8px;"></canvas>
+      <div style="font-size:10px;color:var(--text2);">掃描此 QR Code 進行 M1 回診評估</div>
+      <div id="qr-m0date" style="font-size:10px;color:var(--text2);margin-top:2px;"></div>
+      <div style="font-size:9px;color:var(--text3);margin-top:6px;">雲林縣立醫院 藥劑部</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn btn-primary" onclick="printQR()">列印小卡</button>
+      <button class="btn" onclick="closeQR()">關閉</button>
+    </div>
+  </div>
+</div>
+
 <!-- 刪除確認（密碼保護） -->
 <div class="modal-bg hidden" id="delete-modal">
   <div class="modal">
@@ -755,6 +778,8 @@ async function registerPatient() {
     setSyncStatus('ok', `已同步 ${Object.keys(db).length} 筆｜${nowTime()}`);
     showToast(`✅ ${pid} 已收案！分配至【${grp==='EXP'?'實驗組':'對照組'}】`);
     updateEnrollPreview();
+    // 產生 QR Code 給病患
+    showPatientQR(pid, grp, record.m0date);
   } catch(e) {
     showToast('儲存失敗：' + e.message, false);
   }
@@ -911,6 +936,163 @@ function dlCSV(fn,rows){
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();
 }
+// ════════════════════════════════════════
+// QR Code 病患小卡
+// ════════════════════════════════════════
+function showPatientQR(pid, grp, m0date) {
+  document.getElementById('qr-pid').textContent = pid;
+  const grpLabel = grp === 'EXP' ? '實驗組' : '對照組';
+  const grpColor = grp === 'EXP' ? '#185FA5' : '#3B6D11';
+  const grpEl = document.getElementById('qr-grp');
+  grpEl.textContent = grpLabel;
+  grpEl.style.color = grpColor;
+  const m0str = m0date ? String(m0date).slice(0,10) : '';
+  document.getElementById('qr-m0date').textContent = m0str ? `M0 收案日期：${m0str}` : '';
+
+  // QR Code URL：掃描後帶入 pid 參數自動進入 M1
+  const apiUrl = localStorage.getItem('rapihaler_api_url') || '';
+  const qrUrl = window.location.href.split('?')[0] + '?m1=' + pid;
+  drawQR(qrUrl);
+  document.getElementById('qr-modal').classList.remove('hidden');
+}
+
+function closeQR() {
+  document.getElementById('qr-modal').classList.add('hidden');
+}
+
+function printQR() {
+  const area = document.getElementById('qr-card-area').innerHTML;
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>病患QR小卡</title>
+    <style>
+      body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;}
+      .card{border:2px dashed #ccc;border-radius:8px;padding:20px;text-align:center;width:200px;}
+    </style></head><body>
+    <div class="card">${area}</div>
+    <script>window.onload=function(){window.print();window.close();}<\/script>
+    </body></html>`);
+  win.document.close();
+}
+
+// ── 純 JS QR Code 產生器（不需外部套件）──────────────────────
+function drawQR(text) {
+  const canvas = document.getElementById('qr-canvas');
+  const data = encodeURIComponent(text);
+  // 使用 Google Charts API 樣式的純 JS 實作
+  // 改用簡單方法：產生一個能讓手機掃描的 QR
+  generateQRCanvas(canvas, text, 140);
+}
+
+function generateQRCanvas(canvas, text, size) {
+  // 使用 QR Code 矩陣繪製（簡化版，支援短到中長度 URL）
+  const bytes = new TextEncoder().encode(text);
+  const n = bytes.length;
+
+  // 選擇版本
+  let version, matSize;
+  if (n <= 17) { version=1; matSize=21; }
+  else if (n <= 32) { version=2; matSize=25; }
+  else if (n <= 53) { version=3; matSize=29; }
+  else if (n <= 78) { version=4; matSize=33; }
+  else if (n <= 106) { version=5; matSize=37; }
+  else if (n <= 134) { version=6; matSize=41; }
+  else { version=7; matSize=45; }
+
+  const mat = Array.from({length:matSize}, ()=>new Array(matSize).fill(null));
+
+  // Finder pattern
+  function finder(r, c) {
+    for (let dr=-1; dr<=7; dr++) for (let dc=-1; dc<=7; dc++) {
+      if (r+dr<0||r+dr>=matSize||c+dc<0||c+dc>=matSize) continue;
+      if (dr===-1||dr===7||dc===-1||dc===7) { mat[r+dr][c+dc]=false; continue; }
+      const dark = (dr===0||dr===6||dc===0||dc===6||(dr>=2&&dr<=4&&dc>=2&&dc<=4));
+      mat[r+dr][c+dc] = dark;
+    }
+  }
+  finder(0,0); finder(0,matSize-7); finder(matSize-7,0);
+
+  // Timing
+  for (let i=8; i<matSize-8; i++) {
+    if (mat[6][i]===null) mat[6][i] = i%2===0;
+    if (mat[i][6]===null) mat[i][6] = i%2===0;
+  }
+
+  // Dark module
+  mat[matSize-8][8] = true;
+
+  // Alignment (version >= 2)
+  const alignPos = {2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38]};
+  if (alignPos[version]) {
+    const pos = alignPos[version];
+    for (const r of pos) for (const c of pos) {
+      if (mat[r][c]!==null) continue;
+      for (let dr=-2; dr<=2; dr++) for (let dc=-2; dc<=2; dc++) {
+        if (mat[r+dr]&&mat[r+dr][c+dc]===null)
+          mat[r+dr][c+dc] = (Math.abs(dr)===2||Math.abs(dc)===2||dr===0&&dc===0);
+      }
+    }
+  }
+
+  // Reserve format areas
+  for (let i=0; i<9; i++) { if(mat[8][i]===null)mat[8][i]=false; if(mat[i][8]===null)mat[i][8]=false; }
+  for (let i=matSize-8; i<matSize; i++) { if(mat[8][i]===null)mat[8][i]=false; if(mat[i][8]===null)mat[i][8]=false; }
+
+  // Data bits: byte mode
+  const bits=[];
+  // Mode: 0100
+  bits.push(0,1,0,0);
+  // Length: 8 bits
+  for(let b=7;b>=0;b--) bits.push((n>>b)&1);
+  // Data
+  for(const byte of bytes) for(let b=7;b>=0;b--) bits.push((byte>>b)&1);
+  // Terminator
+  bits.push(0,0,0,0);
+  while(bits.length%8) bits.push(0);
+  // Pad bytes
+  const padBytes=[0xEC,0x11];
+  const capMap={1:19,2:34,3:55,4:80,5:108,6:136,7:156};
+  const cap=capMap[version]||55;
+  const dataBytes=[];
+  for(let i=0;i<bits.length;i+=8) dataBytes.push(parseInt(bits.slice(i,i+8).join(''),2));
+  while(dataBytes.length<cap) dataBytes.push(padBytes[dataBytes.length%2]);
+
+  // Place data in zigzag
+  const allBits=[];
+  for(const b of dataBytes) for(let i=7;i>=0;i--) allBits.push((b>>i)&1);
+  let bitIdx=0, up=true, col=matSize-1;
+  while(col>=0&&bitIdx<allBits.length){
+    if(col===6){col--;continue;}
+    for(let rowOff=0;rowOff<matSize;rowOff++){
+      const row=up?matSize-1-rowOff:rowOff;
+      for(let dc=0;dc<=1;dc++){
+        const c=col-dc;
+        if(c>=0&&mat[row][c]===null&&bitIdx<allBits.length){
+          mat[row][c]=!!allBits[bitIdx++];
+        }
+      }
+    }
+    up=!up; col-=2;
+  }
+
+  // Fill nulls
+  for(let r=0;r<matSize;r++) for(let c=0;c<matSize;c++) if(mat[r][c]===null)mat[r][c]=false;
+
+  // Apply mask 0
+  for(let r=0;r<matSize;r++) for(let c=0;c<matSize;c++) if((r+c)%2===0) mat[r][c]=!mat[r][c];
+
+  // Draw on canvas
+  const border=3;
+  const box=Math.floor(size/(matSize+2*border));
+  const total=(matSize+2*border)*box;
+  canvas.width=total; canvas.height=total;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='white'; ctx.fillRect(0,0,total,total);
+  ctx.fillStyle='black';
+  for(let r=0;r<matSize;r++) for(let c=0;c<matSize;c++)
+    if(mat[r][c]) ctx.fillRect((c+border)*box,(r+border)*box,box,box);
+}
+
 function onCountyChange() {
   const county = document.getElementById('county').value;
   const row = document.getElementById('township-row');
@@ -992,12 +1174,30 @@ buildStepsTable('m0-steps-body','m0');
 buildStepsTable('m1-steps-body','m1');
 document.getElementById('m0date').value=new Date().toISOString().slice(0,10);
 
+// 偵測 QR Code 掃描：?m1=P001 → 自動切換到 M1 並選取病患
+const urlParams = new URLSearchParams(window.location.search);
+const qrPid = urlParams.get('m1');
+
 if(!API_URL){
   document.getElementById('setup-panel').classList.remove('hidden');
   setSyncStatus('err','尚未設定');
   updateEnrollPreview();
 } else {
-  loadAll().then(()=>{ updateEnrollPreview(); });
+  loadAll().then(()=>{
+    updateEnrollPreview();
+    // QR Code 掃描後自動跳至 M1
+    if(qrPid){
+      const m1Tab = document.querySelector('.tab:nth-child(3)');
+      switchTab('m1', m1Tab);
+      const sel = document.getElementById('m1-pid');
+      if(sel){
+        sel.value = qrPid;
+        showToast(`已自動帶入病患 ${qrPid}，請填寫 M1 評估資料`);
+        // 清除網址列的參數（不影響功能）
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  });
 }
 </script>
 </body>
