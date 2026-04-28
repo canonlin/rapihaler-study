@@ -758,9 +758,17 @@ function getNextPidAndGrp() {
   const total = Object.keys(db).length;
   if (total >= 100) return null;
   if (!blockSequence) return null;
-  const n   = total + 1;
+
+  // 從現有病患中找最大編號，避免跳號問題
+  let maxN = 0;
+  Object.keys(db).forEach(pid => {
+    const m = pid.match(/^P(\d+)$/);
+    if (m) maxN = Math.max(maxN, parseInt(m[1]));
+  });
+
+  const n   = maxN + 1;
   const pid = 'P' + String(n).padStart(3, '0');
-  const grp = blockSequence[total];
+  const grp = blockSequence[total]; // 依收案人數決定分組
   return { pid, grp, n };
 }
 
@@ -797,10 +805,21 @@ function updateEnrollPreview() {
 }
 
 async function registerPatient() {
+  // 先重新同步確保資料最新
+  setSyncStatus('loading', '確認中...');
+  await loadAll();
+
   const next = getNextPidAndGrp();
   if (!next) { showToast('收案已達100人上限', false); return; }
 
   const { pid, grp } = next;
+
+  // 再次確認此 PID 不存在
+  if (db[pid]) {
+    showToast(`⚠ ${pid} 已存在，請重新整理後再試`, false);
+    updateEnrollPreview();
+    return;
+  }
 
   const record = {
     pid, grp,
