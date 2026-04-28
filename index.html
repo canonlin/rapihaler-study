@@ -451,7 +451,7 @@
       <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">研究計畫 Symbicort Rapihaler</div>
       <div id="qr-pid" style="font-size:24px;font-weight:700;color:var(--primary);letter-spacing:2px;margin-bottom:4px;"></div>
       <div id="qr-grp" style="font-size:12px;margin-bottom:8px;"></div>
-      <canvas id="qr-canvas" style="display:block;margin:0 auto 8px;"></canvas>
+      <div id="qr-container" style="display:flex;justify-content:center;align-items:center;margin:8px auto;min-height:150px;"></div>
       <div style="font-size:10px;color:var(--text2);">掃描此 QR Code 進行 M1 回診評估</div>
       <div id="qr-m0date" style="font-size:10px;color:var(--text2);margin-top:2px;"></div>
       <!-- M1 研究評估預計日（電腦計算） -->
@@ -1061,36 +1061,26 @@ function printQR() {
 
 // ── 純 JS QR Code 產生器（不需外部套件）──────────────────────
 function drawQR(text) {
-  // 使用 qrcode.js 可靠的 QR Code 產生器
-  const canvas = document.getElementById('qr-canvas');
-  canvas.width = 160; canvas.height = 160;
+  const container = document.getElementById('qr-container');
+  container.innerHTML = ''; // 清空舊的
 
   if (typeof QRCode !== 'undefined') {
-    // qrcode.js 已載入
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, 160, 160);
-    const qr = new QRCode(0, QRCode.CorrectLevel.M);
-    qr.addData(text);
-    qr.make();
-    const count = qr.getModuleCount();
-    const box = Math.floor(140 / count);
-    const offset = Math.floor((160 - count * box) / 2);
-    for (let r = 0; r < count; r++) {
-      for (let c = 0; c < count; c++) {
-        ctx.fillStyle = qr.isDark(r, c) ? 'black' : 'white';
-        ctx.fillRect(offset + c * box, offset + r * box, box, box);
-      }
-    }
+    // qrcode.js 正確用法：傳入 DOM 元素
+    new QRCode(container, {
+      text: text,
+      width: 150,
+      height: 150,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
   } else {
-    // fallback: 使用 Google Charts API 產生 QR Code 圖片
+    // fallback：用線上 API 產生圖片
     const img = document.createElement('img');
     img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(text);
     img.style.cssText = 'width:150px;height:150px;display:block;margin:0 auto;';
     img.alt = 'QR Code';
-    const parent = canvas.parentNode;
-    parent.replaceChild(img, canvas);
-    img.id = 'qr-canvas'; // keep id for reference
+    container.appendChild(img);
   }
 }
 
