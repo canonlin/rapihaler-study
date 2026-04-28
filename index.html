@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>研究計畫 Symbicort Rapihaler 電子收案系統</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
     --primary:#185FA5; --primary-light:#E6F1FB; --primary-dark:#0C447C;
@@ -196,8 +197,26 @@
 
       <div class="card">
         <div class="card-title">基本資料登錄</div>
-        <div class="form-row c2">
+        <div class="form-row c4">
           <div class="form-group"><label>M0 收案日期</label><input type="date" id="m0date" /></div>
+          <div class="form-group"><label>收案暨M0評估院區 *</label>
+            <select id="clinic">
+              <option value="">請選擇</option>
+              <option value="虎尾院區">虎尾院區</option>
+              <option value="斗六院區">斗六院區</option>
+            </select>
+          </div>
+          <div class="form-group"><label>收案暨M0評估藥師 *</label>
+            <select id="pharmacist">
+              <option value="">請選擇</option>
+              <option>黃永成</option>
+              <option>林家薐</option>
+              <option>黃詩婷</option>
+              <option>林亭君</option>
+              <option>曾彥哲</option>
+              <option>劉士宏</option>
+            </select>
+          </div>
         </div>
         <div class="form-row c4">
           <div class="form-group"><label>年齡（歲）</label><input type="number" id="age" min="0" max="120" /></div>
@@ -277,6 +296,11 @@
             <select id="m0-pid" onchange="onM0PidChange()"><option value="">請選擇已登錄病患</option></select>
           </div>
         </div>
+        <!-- 院區和藥師從收案資料自動帶入 -->
+        <div id="m0-clinic-info" style="font-size:12px;color:var(--text2);padding:6px 10px;background:var(--gray);border-radius:var(--radius-sm);margin-top:8px;">
+          院區：<strong id="m0-clinic-label">—</strong>　藥師：<strong id="m0-pharmacist-label">—</strong>
+          <span style="font-size:11px;opacity:0.7;">（與收案當天相同）</span>
+        </div>
       </div>
       <div class="card">
         <div class="card-title">甲、AI 判讀模型學習次數記錄</div>
@@ -314,6 +338,26 @@
             <select id="m1-pid"><option value="">請選擇已登錄病患</option></select>
           </div>
         </div>
+        <div class="form-row c2">
+          <div class="form-group"><label>M1 評估院區</label>
+            <select id="m1-clinic">
+              <option value="">請選擇</option>
+              <option value="虎尾院區">虎尾院區</option>
+              <option value="斗六院區">斗六院區</option>
+            </select>
+          </div>
+          <div class="form-group"><label>M1 評估藥師</label>
+            <select id="m1-pharmacist">
+              <option value="">請選擇</option>
+              <option>黃永成</option>
+              <option>林家薐</option>
+              <option>黃詩婷</option>
+              <option>林亭君</option>
+              <option>曾彥哲</option>
+              <option>劉士宏</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div class="card">
         <div class="card-title">甲、藥師評估 — Symbicort Rapihaler 操作正確率（M1）</div>
@@ -345,7 +389,11 @@
           <table class="pt">
             <thead><tr>
               <th>代碼</th><th>組別</th><th>性別</th><th>年齡</th><th>教育</th>
-              <th>縣市</th><th>鄉鎮</th><th>M0日期</th><th>M0正確率</th><th>M1正確率</th><th>M0問卷</th><th>M1狀態</th><th>操作</th>
+              <th>縣市</th><th>鄉鎮</th><th>M0日期</th>
+              <th>收案院區</th><th>收案藥師</th>
+              <th>M0正確率</th>
+              <th>M1院區</th><th>M1藥師</th><th>M1正確率</th>
+              <th>M0問卷</th><th>M1狀態</th><th>操作</th>
             </tr></thead>
             <tbody id="pt-body"></tbody>
           </table>
@@ -406,7 +454,14 @@
       <canvas id="qr-canvas" style="display:block;margin:0 auto 8px;"></canvas>
       <div style="font-size:10px;color:var(--text2);">掃描此 QR Code 進行 M1 回診評估</div>
       <div id="qr-m0date" style="font-size:10px;color:var(--text2);margin-top:2px;"></div>
-      <div style="font-size:9px;color:var(--text3);margin-top:6px;">雲林縣立醫院 藥劑部</div>
+      <!-- M1 研究評估預計日（電腦計算） -->
+      <div id="qr-m1date" style="font-size:10px;font-weight:600;color:#3B6D11;margin-top:6px;background:#EAF3DE;border-radius:4px;padding:4px 10px;display:inline-block;"></div>
+      <!-- 下次預約回診時間（藥師手填） -->
+      <div style="margin-top:8px;border-top:1px dashed #ccc;padding-top:8px;">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">下次預約回診時間（請藥師填寫）</div>
+        <div style="border-bottom:1px solid #333;width:140px;height:18px;margin:0 auto;"></div>
+      </div>
+      <div style="font-size:9px;color:var(--text3);margin-top:6px;">台大醫院雲林分院 藥劑部</div>
     </div>
     <div style="display:flex;gap:8px;justify-content:center;">
       <button class="btn btn-primary" onclick="printQR()">列印小卡</button>
@@ -639,6 +694,17 @@ function onM0PidChange() {
   form.innerHTML='';
   ['ai1','ai2','ai3','ai4'].forEach(id=>document.getElementById(id).value=0);
 
+  // 自動帶入院區和藥師（從收案資料）
+  const clinicLabel = document.getElementById('m0-clinic-label');
+  const pharmLabel  = document.getElementById('m0-pharmacist-label');
+  if(p) {
+    if(clinicLabel) clinicLabel.textContent = p.clinic || '未填寫';
+    if(pharmLabel)  pharmLabel.textContent  = p.pharmacist || '未填寫';
+  } else {
+    if(clinicLabel) clinicLabel.textContent = '—';
+    if(pharmLabel)  pharmLabel.textContent  = '—';
+  }
+
   if(!p){titleEl.textContent='丙、病患衛教滿意度問卷';form.innerHTML='<p style="font-size:13px;color:var(--text2);">請先選取病患</p>';return;}
 
   if(p.m0_data){
@@ -739,6 +805,8 @@ async function registerPatient() {
   const record = {
     pid, grp,
     m0date: document.getElementById('m0date').value,
+    clinic: document.getElementById('clinic').value,
+    pharmacist: document.getElementById('pharmacist').value,
     age: document.getElementById('age').value || null,
     sex: document.getElementById('sex').value,
     edu: document.getElementById('edu').value,
@@ -761,7 +829,7 @@ async function registerPatient() {
     refreshSelects();
     // 重設表單
     document.getElementById('age').value = '';
-    ['sex','edu','job','ses','alone','support','phone','digital','inhaler_exp','county','township'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['sex','edu','job','ses','alone','support','phone','digital','inhaler_exp','county','township','clinic','pharmacist'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     document.getElementById('township-row').style.display = 'none';
     document.getElementById('m0date').value = new Date().toISOString().slice(0,10);
     setSyncStatus('ok', `已同步 ${Object.keys(db).length} 筆｜${nowTime()}`);
@@ -797,7 +865,12 @@ async function saveM0() {
   let sat={};
   if(p.grp==='EXP'){sat.voice=getLikert('voice',VOICE_Q.length);sat.sys=getLikert('sys',SYS_Q.length);sat.edu=getLikert('edu',EDU_Q.length);}
   else{sat.edu=getLikert('edu',EDU_Q.length);}
-  const m0_data={ai,steps,sat,saved:new Date().toISOString()};
+  const m0_data={
+    ai, steps, sat,
+    clinic: p.clinic || '',       // 從收案資料自動帶入
+    pharmacist: p.pharmacist || '', // 從收案資料自動帶入
+    saved: new Date().toISOString()
+  };
 
   setBtn('btn-save-m0',true);
   try {
@@ -830,7 +903,12 @@ async function saveM1() {
   }
 
   const steps=getSteps('m1');
-  const m1_data={steps,saved:new Date().toISOString()};
+  const m1_data={
+    steps,
+    clinic: document.getElementById('m1-clinic').value,
+    pharmacist: document.getElementById('m1-pharmacist').value,
+    saved: new Date().toISOString()
+  };
 
   setBtn('btn-save-m1',true);
   try {
@@ -865,7 +943,11 @@ function renderDash() {
       <td><span class="badge ${p.grp==='EXP'?'b-exp':'b-ctrl'}">${p.grp==='EXP'?'實驗組':'對照組'}</span></td>
       <td>${p.sex||'—'}</td><td>${p.age||'—'}</td><td>${p.edu||'—'}</td>
       <td>${p.county||p.area||'—'}</td><td>${p.township||'—'}</td>
-      <td>${m0date}</td><td>${m0p}</td><td>${m1p}</td><td>${satD}</td><td>${m1D}</td>
+      <td>${m0date}</td>
+      <td>${p.clinic||'—'}</td><td>${p.pharmacist||'—'}</td>
+      <td>${m0p}</td>
+      <td>${p.m1_data?.clinic||'—'}</td><td>${p.m1_data?.pharmacist||'—'}</td><td>${m1p}</td>
+      <td>${satD}</td><td>${m1D}</td>
       <td><button class="btn" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger);" onclick="askDelete('${p.pid}')">刪除</button></td>`;
     tb.appendChild(tr);
   });
@@ -935,12 +1017,23 @@ function showPatientQR(pid, grp, m0date) {
   const grpEl = document.getElementById('qr-grp');
   grpEl.textContent = grpLabel;
   grpEl.style.color = grpColor;
+
+  // M0 日期
   const m0str = m0date ? String(m0date).slice(0,10) : '';
   document.getElementById('qr-m0date').textContent = m0str ? `M0 收案日期：${m0str}` : '';
 
+  // M1 預計回診日（M0 + 30天）
+  if (m0str) {
+    const m1est = new Date(m0str);
+    m1est.setDate(m1est.getDate() + 30);
+    const m1str = m1est.toISOString().slice(0,10);
+    document.getElementById('qr-m1date').textContent = `🔬 M1 研究評估預計日：${m1str}`;
+  } else {
+    document.getElementById('qr-m1date').textContent = '';
+  }
+
   // QR Code URL：掃描後帶入 pid 參數自動進入 M1
-  const apiUrl = localStorage.getItem('rapihaler_api_url') || '';
-  const qrUrl = window.location.href.split('?')[0] + '?m1=' + pid;
+  const qrUrl = 'https://rapihaler-study.vercel.app/?m1=' + pid;
   drawQR(qrUrl);
   document.getElementById('qr-modal').classList.remove('hidden');
 }
@@ -955,132 +1048,52 @@ function printQR() {
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>病患QR小卡</title>
     <style>
-      body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;}
-      .card{border:2px dashed #ccc;border-radius:8px;padding:20px;text-align:center;width:200px;}
+      body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;background:white;}
+      .card{border:2px dashed #ccc;border-radius:8px;padding:20px;text-align:center;width:220px;}
+      canvas,img{display:block;margin:8px auto;}
+      @media print{body{margin:0;}.card{border:2px dashed #999;}}
     </style></head><body>
     <div class="card">${area}</div>
-    <script>window.onload=function(){window.print();window.close();}<\/script>
+    <script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>
     </body></html>`);
   win.document.close();
 }
 
 // ── 純 JS QR Code 產生器（不需外部套件）──────────────────────
 function drawQR(text) {
+  // 使用 qrcode.js 可靠的 QR Code 產生器
   const canvas = document.getElementById('qr-canvas');
-  const data = encodeURIComponent(text);
-  // 使用 Google Charts API 樣式的純 JS 實作
-  // 改用簡單方法：產生一個能讓手機掃描的 QR
-  generateQRCanvas(canvas, text, 140);
-}
+  canvas.width = 160; canvas.height = 160;
 
-function generateQRCanvas(canvas, text, size) {
-  // 使用 QR Code 矩陣繪製（簡化版，支援短到中長度 URL）
-  const bytes = new TextEncoder().encode(text);
-  const n = bytes.length;
-
-  // 選擇版本
-  let version, matSize;
-  if (n <= 17) { version=1; matSize=21; }
-  else if (n <= 32) { version=2; matSize=25; }
-  else if (n <= 53) { version=3; matSize=29; }
-  else if (n <= 78) { version=4; matSize=33; }
-  else if (n <= 106) { version=5; matSize=37; }
-  else if (n <= 134) { version=6; matSize=41; }
-  else { version=7; matSize=45; }
-
-  const mat = Array.from({length:matSize}, ()=>new Array(matSize).fill(null));
-
-  // Finder pattern
-  function finder(r, c) {
-    for (let dr=-1; dr<=7; dr++) for (let dc=-1; dc<=7; dc++) {
-      if (r+dr<0||r+dr>=matSize||c+dc<0||c+dc>=matSize) continue;
-      if (dr===-1||dr===7||dc===-1||dc===7) { mat[r+dr][c+dc]=false; continue; }
-      const dark = (dr===0||dr===6||dc===0||dc===6||(dr>=2&&dr<=4&&dc>=2&&dc<=4));
-      mat[r+dr][c+dc] = dark;
-    }
-  }
-  finder(0,0); finder(0,matSize-7); finder(matSize-7,0);
-
-  // Timing
-  for (let i=8; i<matSize-8; i++) {
-    if (mat[6][i]===null) mat[6][i] = i%2===0;
-    if (mat[i][6]===null) mat[i][6] = i%2===0;
-  }
-
-  // Dark module
-  mat[matSize-8][8] = true;
-
-  // Alignment (version >= 2)
-  const alignPos = {2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38]};
-  if (alignPos[version]) {
-    const pos = alignPos[version];
-    for (const r of pos) for (const c of pos) {
-      if (mat[r][c]!==null) continue;
-      for (let dr=-2; dr<=2; dr++) for (let dc=-2; dc<=2; dc++) {
-        if (mat[r+dr]&&mat[r+dr][c+dc]===null)
-          mat[r+dr][c+dc] = (Math.abs(dr)===2||Math.abs(dc)===2||dr===0&&dc===0);
+  if (typeof QRCode !== 'undefined') {
+    // qrcode.js 已載入
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, 160, 160);
+    const qr = new QRCode(0, QRCode.CorrectLevel.M);
+    qr.addData(text);
+    qr.make();
+    const count = qr.getModuleCount();
+    const box = Math.floor(140 / count);
+    const offset = Math.floor((160 - count * box) / 2);
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        ctx.fillStyle = qr.isDark(r, c) ? 'black' : 'white';
+        ctx.fillRect(offset + c * box, offset + r * box, box, box);
       }
     }
+  } else {
+    // fallback: 使用 Google Charts API 產生 QR Code 圖片
+    const img = document.createElement('img');
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(text);
+    img.style.cssText = 'width:150px;height:150px;display:block;margin:0 auto;';
+    img.alt = 'QR Code';
+    const parent = canvas.parentNode;
+    parent.replaceChild(img, canvas);
+    img.id = 'qr-canvas'; // keep id for reference
   }
-
-  // Reserve format areas
-  for (let i=0; i<9; i++) { if(mat[8][i]===null)mat[8][i]=false; if(mat[i][8]===null)mat[i][8]=false; }
-  for (let i=matSize-8; i<matSize; i++) { if(mat[8][i]===null)mat[8][i]=false; if(mat[i][8]===null)mat[i][8]=false; }
-
-  // Data bits: byte mode
-  const bits=[];
-  // Mode: 0100
-  bits.push(0,1,0,0);
-  // Length: 8 bits
-  for(let b=7;b>=0;b--) bits.push((n>>b)&1);
-  // Data
-  for(const byte of bytes) for(let b=7;b>=0;b--) bits.push((byte>>b)&1);
-  // Terminator
-  bits.push(0,0,0,0);
-  while(bits.length%8) bits.push(0);
-  // Pad bytes
-  const padBytes=[0xEC,0x11];
-  const capMap={1:19,2:34,3:55,4:80,5:108,6:136,7:156};
-  const cap=capMap[version]||55;
-  const dataBytes=[];
-  for(let i=0;i<bits.length;i+=8) dataBytes.push(parseInt(bits.slice(i,i+8).join(''),2));
-  while(dataBytes.length<cap) dataBytes.push(padBytes[dataBytes.length%2]);
-
-  // Place data in zigzag
-  const allBits=[];
-  for(const b of dataBytes) for(let i=7;i>=0;i--) allBits.push((b>>i)&1);
-  let bitIdx=0, up=true, col=matSize-1;
-  while(col>=0&&bitIdx<allBits.length){
-    if(col===6){col--;continue;}
-    for(let rowOff=0;rowOff<matSize;rowOff++){
-      const row=up?matSize-1-rowOff:rowOff;
-      for(let dc=0;dc<=1;dc++){
-        const c=col-dc;
-        if(c>=0&&mat[row][c]===null&&bitIdx<allBits.length){
-          mat[row][c]=!!allBits[bitIdx++];
-        }
-      }
-    }
-    up=!up; col-=2;
-  }
-
-  // Fill nulls
-  for(let r=0;r<matSize;r++) for(let c=0;c<matSize;c++) if(mat[r][c]===null)mat[r][c]=false;
-
-  // Apply mask 0
-  for(let r=0;r<matSize;r++) for(let c=0;c<matSize;c++) if((r+c)%2===0) mat[r][c]=!mat[r][c];
-
-  // Draw on canvas
-  const border=3;
-  const box=Math.floor(size/(matSize+2*border));
-  const total=(matSize+2*border)*box;
-  canvas.width=total; canvas.height=total;
-  const ctx=canvas.getContext('2d');
-  ctx.fillStyle='white'; ctx.fillRect(0,0,total,total);
-  ctx.fillStyle='black';
-  for(let r=0;r<matSize;r++) for(let c=0;c<matSize;c++)
-    if(mat[r][c]) ctx.fillRect((c+border)*box,(r+border)*box,box,box);
 }
+
 
 function onCountyChange() {
   const county = document.getElementById('county').value;
@@ -1098,12 +1111,20 @@ function onCountyChange() {
 function today(){return new Date().toISOString().slice(0,10).replace(/-/g,'');}
 
 function exportMain(){
-  const h=['PID','Group','Sex','Age','Education','Occupation','SES','Alone','Family_Support','Smartphone','Digital_Skill','Inhaler_Experience','County','Township','M0_Date','AI_S1','AI_S2','AI_S3','AI_S4','M0_Score','M0_Pct','M1_Score','M1_Pct'];
+  const h=['PID','Group','M0_Clinic','M0_Pharmacist','Sex','Age','Education','Occupation','SES','Alone','Family_Support','Smartphone','Digital_Skill','Inhaler_Experience','County','Township','M0_Date',
+    'AI_S1','AI_S2','AI_S3','AI_S4','M0_Score','M0_Pct',
+    'M1_Clinic','M1_Pharmacist','M1_Score','M1_Pct'];
   const rows=[h];
   Object.values(db).sort((a,b)=>a.pid.localeCompare(b.pid)).forEach(p=>{
-    rows.push([p.pid,p.grp,p.sex,p.age,p.edu,p.job,p.ses,p.alone,p.support,p.phone,p.digital,p.inhaler_exp,p.county||p.area||'',p.township||'',p.m0date,
-      p.m0_data?.ai?.s1??'',p.m0_data?.ai?.s2??'',p.m0_data?.ai?.s3??'',p.m0_data?.ai?.s4??'',
-      p.m0_data?.steps?.score??'',p.m0_data?.steps?.pct??'',p.m1_data?.steps?.score??'',p.m1_data?.steps?.pct??'']);
+    rows.push([
+      p.pid, p.grp, p.clinic||'', p.pharmacist||'',
+      p.sex, p.age, p.edu, p.job, p.ses, p.alone, p.support,
+      p.phone, p.digital, p.inhaler_exp, p.county||p.area||'', p.township||'', p.m0date,
+      p.m0_data?.ai?.s1??'', p.m0_data?.ai?.s2??'', p.m0_data?.ai?.s3??'', p.m0_data?.ai?.s4??'',
+      p.m0_data?.steps?.score??'', p.m0_data?.steps?.pct??'',
+      p.m1_data?.clinic||'', p.m1_data?.pharmacist||'',
+      p.m1_data?.steps?.score??'', p.m1_data?.steps?.pct??''
+    ]);
   });
   dlCSV('主要資料表_'+today()+'.csv',rows);showToast('主要資料已匯出');
 }
