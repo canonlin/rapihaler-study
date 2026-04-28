@@ -156,17 +156,7 @@
     <div id="sync-status" class="sync-status loading">連線中...</div>
   </div>
 
-  <!-- 未設定 API 時顯示設定畫面 -->
-  <div id="setup-panel" class="hidden">
-    <div class="setup-card">
-      <h2>⚙️ 第一次使用：請輸入 Apps Script 網址</h2>
-      <p>請依照說明文件完成 Google Apps Script 部署，<br>並將取得的「網頁應用程式網址」貼入下方：</p>
-      <div class="setup-input">
-        <input type="text" id="api-url-input" placeholder="https://script.google.com/macros/s/xxxxx/exec" />
-        <button class="btn btn-primary" onclick="saveApiUrl()">儲存並連線</button>
-      </div>
-    </div>
-  </div>
+  <!-- API 網址已內建，無需手動設定 -->
 
   <div id="main-content">
     <div class="tabs">
@@ -450,9 +440,8 @@
 // ════════════════════════════════════════
 // ↓↓↓ 部署後填入您的 Apps Script 網址 ↓↓↓
 const API_URL_KEY = 'rapihaler_api_url';
-const SHEETS_URL_KEY = 'rapihaler_sheets_url';
-
-let API_URL = localStorage.getItem(API_URL_KEY) || '';
+const HARDCODED_API_URL = 'https://script.google.com/macros/s/AKfycbz8OmH1WXiwqx-Eko19KKXVffu89jz-w2opkc6hI1hf2nSB13_FGWkUynA7uWPkFP8/exec';
+let API_URL = HARDCODED_API_URL; // 直接寫死，不需手動輸入
 let db = {};
 
 // ════════════════════════════════════════
@@ -1179,13 +1168,11 @@ const urlParams = new URLSearchParams(window.location.search);
 const qrPid = urlParams.get('m1');
 
 if(!API_URL){
-  document.getElementById('setup-panel').classList.remove('hidden');
-  setSyncStatus('err','尚未設定');
+  setSyncStatus('err','連線設定錯誤，請聯絡管理員');
   updateEnrollPreview();
 } else {
   loadAll().then(()=>{
     updateEnrollPreview();
-    // QR Code 掃描後自動跳至 M1
     if(qrPid){
       const m1Tab = document.querySelector('.tab:nth-child(3)');
       switchTab('m1', m1Tab);
@@ -1193,7 +1180,6 @@ if(!API_URL){
       if(sel){
         sel.value = qrPid;
         showToast(`已自動帶入病患 ${qrPid}，請填寫 M1 評估資料`);
-        // 清除網址列的參數（不影響功能）
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
