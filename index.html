@@ -281,6 +281,39 @@
             </select>
           </div>
         </div>
+        <!-- ═══ 聯絡資訊 & 預約回診（新增） ═══ -->
+        <div style="margin-top:12px;padding:12px 14px;background:#FEF9E7;border:1.5px solid #F0C040;border-radius:8px;">
+          <div style="font-size:12px;font-weight:700;color:#7D6608;margin-bottom:10px;">📞 聯絡資訊 & 預約回診（確保追蹤完整性）</div>
+          <div class="form-row c3">
+            <div class="form-group">
+              <label>病患聯絡電話</label>
+              <input type="text" id="contact_phone" placeholder="09XX-XXX-XXX" />
+            </div>
+            <div class="form-group">
+              <label>聯絡人姓名（本人或家屬）</label>
+              <input type="text" id="contact_name" placeholder="例如：王大明" />
+            </div>
+            <div class="form-group">
+              <label>與病患關係</label>
+              <select id="contact_relation">
+                <option value="">請選擇</option>
+                <option>本人</option><option>配偶</option><option>子女</option>
+                <option>父母</option><option>兄弟姊妹</option><option>其他家屬</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row c2">
+            <div class="form-group">
+              <label>預約 M1 回診日期</label>
+              <input type="date" id="appt_m1_date" />
+            </div>
+            <div class="form-group">
+              <label>預約備註（診間、注意事項）</label>
+              <input type="text" id="appt_note" placeholder="例如：胸腔科林醫師門診，需帶吸入器" />
+            </div>
+          </div>
+          <div id="appt-countdown" style="font-size:12px;color:#185FA5;display:none;padding:4px 8px;background:#E6F1FB;border-radius:6px;"></div>
+        </div>
         <div class="actions">
           <button class="btn btn-primary" id="btn-register" onclick="registerPatient()">確認收案 →（系統自動編號分組）</button>
         </div>
@@ -335,7 +368,7 @@
         <div class="card-title">選取病患（M1 回診）</div>
         <div class="form-row c2">
           <div class="form-group"><label>病患代碼</label>
-            <select id="m1-pid"><option value="">請選擇已登錄病患</option></select>
+            <select id="m1-pid" onchange="onM1PidChange()"><option value="">請選擇已登錄病患</option></select>
           </div>
         </div>
         <div class="form-row c2">
@@ -367,6 +400,93 @@
         </table>
         <div class="score-bar">正確步驟：<strong id="m1-cc">0</strong> / 8　　正確率：<strong id="m1-pct">0%</strong></div>
       </div>
+
+      <!-- ═══ 居家學習紀錄（實驗組顯示，對照組隱藏） ═══ -->
+      <div id="m1-home-section" style="display:none;">
+        <div class="card" style="border-color:#2E86C1;">
+          <div class="card-title" style="color:#2E86C1;">📊 乙、居家學習追蹤 — 平台後台數據（藥師填入）</div>
+          <div style="padding:8px 12px;background:#EBF5FB;border-radius:6px;font-size:12px;color:#1A5276;margin-bottom:12px;">
+            💡 請至 Bitly / Google Analytics 後台查詢後填入，數據為系統自動記錄，不依賴病患回憶。
+          </div>
+          <div class="form-row c2">
+            <div class="form-group">
+              <label>QR Code 教學影片 — 點擊總次數（後台）</label>
+              <input type="number" id="home_qr_clicks" min="0" placeholder="從 Bitly / GA 後台查詢" />
+            </div>
+            <div class="form-group">
+              <label>NFC 語音藥袋 — 點擊總次數（後台）</label>
+              <input type="number" id="home_nfc_clicks" min="0" placeholder="從 Bitly / GA 後台查詢" />
+            </div>
+          </div>
+          <div class="form-row c2">
+            <div class="form-group">
+              <label>首次使用日期（後台）</label>
+              <input type="date" id="home_first_access" />
+            </div>
+            <div class="form-group">
+              <label>最後使用日期（後台）</label>
+              <input type="date" id="home_last_access" />
+            </div>
+          </div>
+          <div id="home-calc-bar" style="display:none;padding:8px 12px;background:#EBF5FB;border-radius:6px;font-size:12px;color:#185FA5;"></div>
+        </div>
+        <div class="card" style="border-color:#2E86C1;">
+          <div class="card-title" style="color:#2E86C1;">🏠 丙、居家學習使用行為（病患自填）</div>
+          <div class="form-row c2">
+            <div class="form-group">
+              <label>居家期間每週平均使用頻率</label>
+              <select id="home_subj_freq">
+                <option value="">請選擇</option>
+                <option value="0">從未使用</option>
+                <option value="1">每週少於1次</option>
+                <option value="2">每週約1次</option>
+                <option value="3">每週2–3次</option>
+                <option value="4">每週4–5次</option>
+                <option value="5">幾乎每天</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>每次使用約花費時間</label>
+              <select id="home_subj_time">
+                <option value="">請選擇</option>
+                <option value="1">少於1分鐘</option>
+                <option value="2">1–3分鐘</option>
+                <option value="3">3–5分鐘</option>
+                <option value="4">5–10分鐘</option>
+                <option value="5">超過10分鐘</option>
+              </select>
+            </div>
+          </div>
+          <div id="home-likert-area"></div>
+          <div class="form-group" style="margin-top:10px;">
+            <label>使用上遇到的困難或不便</label>
+            <textarea id="home_difficulty" rows="2" placeholder="例如：手機掃不到QR code、語音太快..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>整體自覺幫助程度（1＝完全沒幫助　10＝非常有幫助）</label>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+              <input type="range" id="home_helpful" min="1" max="10" value="5" style="flex:1;" oninput="document.getElementById('home_helpful_val').textContent=this.value" />
+              <span id="home_helpful_val" style="font-size:22px;font-weight:800;color:#2E86C1;min-width:32px;text-align:center;">5</span>
+              <span style="font-size:12px;color:#5D6D7E;">分</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>其他補充說明</label>
+            <textarea id="home_comment" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🏥 急診觀察指標</div>
+        <div class="form-row c2">
+          <div class="form-group">
+            <label>收案後至回診期間急診次數（呼吸道相關，若無填 0）</label>
+            <input type="number" id="m1_er_visits" min="0" placeholder="0" />
+          </div>
+        </div>
+      </div>
+
       <div class="actions">
         <button class="btn btn-primary" id="btn-save-m1" onclick="saveM1()">儲存 M1 資料</button>
       </div>
@@ -374,6 +494,8 @@
 
     <!-- ④ 總覽 -->
     <div id="panel-dash" class="panel">
+      <!-- 追蹤警示橫幅 -->
+      <div id="dash-alerts"></div>
       <div class="stats-grid">
         <div class="stat-card"><div class="val" id="s-total">0</div><div class="lbl">總收案人數</div></div>
         <div class="stat-card"><div class="val" id="s-exp">0</div><div class="lbl">實驗組 / 50</div></div>
@@ -390,6 +512,7 @@
             <thead><tr>
               <th>代碼</th><th>組別</th><th>性別</th><th>年齡</th><th>教育</th>
               <th>縣市</th><th>鄉鎮</th><th>M0日期</th>
+              <th>📞 聯絡電話</th><th>📅 預約M1日</th><th>⏰ 倒數</th>
               <th>收案院區</th><th>收案藥師</th>
               <th>M0正確率</th>
               <th>M1院區</th><th>M1藥師</th><th>M1正確率</th>
@@ -532,6 +655,13 @@ const EDU_Q = [
   "衛教過程中，藥師有耐心傾聽並回答我的問題",
   "整體衛教時間安排適當，不會太匆忙",
   "我對這次的衛教整體感到滿意"
+];
+const HOME_Q = [
+  "居家期間，我有使用 QR Code 觀看吸入劑教學影片",
+  "居家期間，我有使用 NFC 語音藥袋複習吸入劑步驟",
+  "語音藥袋／教學影片的內容幫助我在家中正確練習吸入劑",
+  "這段居家學習期間，我對吸入劑的使用更有信心",
+  "我認為居家介入資源（QR Code 影片＋語音藥袋）對維持正確用藥有幫助"
 ];
 const LIKERT = [{val:5,label:"非常同意"},{val:4,label:"同意"},{val:3,label:"普通"},{val:2,label:"不同意"},{val:1,label:"非常不同意"}];
 
@@ -732,6 +862,56 @@ function onM0PidChange() {
   }
 }
 
+function onM1PidChange() {
+  const pid = document.getElementById('m1-pid').value;
+  const p = pid ? db[pid] : null;
+  const homeSection = document.getElementById('m1-home-section');
+  const homeArea = document.getElementById('home-likert-area');
+  if(p && p.grp === 'EXP') {
+    homeSection.style.display = 'block';
+    // Build home likert if not yet built
+    if(!homeArea.querySelector('.lk-row')) {
+      buildLikert(homeArea, HOME_Q, 'home');
+    }
+    // Fill existing data if any
+    if(p.m1_data?.home_data) {
+      const hd = p.m1_data.home_data;
+      document.getElementById('home_qr_clicks').value = hd.qr_clicks || '';
+      document.getElementById('home_nfc_clicks').value = hd.nfc_clicks || '';
+      document.getElementById('home_first_access').value = hd.first_access || '';
+      document.getElementById('home_last_access').value = hd.last_access || '';
+      document.getElementById('home_subj_freq').value = hd.subj_freq || '';
+      document.getElementById('home_subj_time').value = hd.subj_time || '';
+      document.getElementById('home_difficulty').value = hd.difficulty || '';
+      document.getElementById('home_helpful').value = hd.helpful || 5;
+      document.getElementById('home_helpful_val').textContent = hd.helpful || 5;
+      document.getElementById('home_comment').value = hd.comment || '';
+      if(hd.likert) fillLikert('home', hd.likert, HOME_Q.length);
+    }
+    // Auto-calc usage span
+    document.getElementById('home_first_access').addEventListener('change', updateHomeCalc);
+    document.getElementById('home_last_access').addEventListener('change', updateHomeCalc);
+    document.getElementById('home_qr_clicks').addEventListener('input', updateHomeCalc);
+    document.getElementById('home_nfc_clicks').addEventListener('input', updateHomeCalc);
+  } else {
+    homeSection.style.display = 'none';
+  }
+  // Reset ER visits
+  document.getElementById('m1_er_visits').value = p?.m1_data?.er_visits || '';
+}
+function updateHomeCalc() {
+  const bar = document.getElementById('home-calc-bar');
+  const f = document.getElementById('home_first_access').value;
+  const l = document.getElementById('home_last_access').value;
+  const qr = parseInt(document.getElementById('home_qr_clicks').value)||0;
+  const nfc = parseInt(document.getElementById('home_nfc_clicks').value)||0;
+  if(f && l) {
+    const days = Math.max(0, Math.round((new Date(l)-new Date(f))/86400000));
+    bar.style.display='block';
+    bar.innerHTML=`📅 使用跨度：<strong>${days} 天</strong>　總互動次數：<strong>${qr+nfc} 次</strong>`;
+  }
+}
+
 function refreshSelects() {
   const pids=Object.keys(db).sort();
   ['m0-pid','m1-pid'].forEach(id=>{
@@ -838,6 +1018,11 @@ async function registerPatient() {
     inhaler_exp: document.getElementById('inhaler_exp').value,
     county: document.getElementById('county').value,
     township: document.getElementById('township').value,
+    contact_phone: document.getElementById('contact_phone').value,
+    contact_name: document.getElementById('contact_name').value,
+    contact_relation: document.getElementById('contact_relation').value,
+    appt_m1_date: document.getElementById('appt_m1_date').value,
+    appt_note: document.getElementById('appt_note').value,
     created: new Date().toISOString()
   };
 
@@ -848,7 +1033,8 @@ async function registerPatient() {
     refreshSelects();
     // 重設表單
     document.getElementById('age').value = '';
-    ['sex','edu','job','ses','alone','support','phone','digital','inhaler_exp','county','township','clinic','pharmacist'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['sex','edu','job','ses','alone','support','phone','digital','inhaler_exp','county','township','clinic','pharmacist',
+     'contact_phone','contact_name','contact_relation','appt_m1_date','appt_note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});;
     document.getElementById('township-row').style.display = 'none';
     document.getElementById('m0date').value = new Date().toISOString().slice(0,10);
     setSyncStatus('ok', `已同步 ${Object.keys(db).length} 筆｜${nowTime()}`);
@@ -922,10 +1108,29 @@ async function saveM1() {
   }
 
   const steps=getSteps('m1');
+  // 居家學習資料（實驗組）
+  let home_data = null;
+  if(p && p.grp === 'EXP') {
+    const homeQs = getLikert('home',HOME_Q.length);
+    home_data = {
+      qr_clicks: document.getElementById('home_qr_clicks').value || '',
+      nfc_clicks: document.getElementById('home_nfc_clicks').value || '',
+      first_access: document.getElementById('home_first_access').value || '',
+      last_access: document.getElementById('home_last_access').value || '',
+      subj_freq: document.getElementById('home_subj_freq').value || '',
+      subj_time: document.getElementById('home_subj_time').value || '',
+      likert: homeQs,
+      difficulty: document.getElementById('home_difficulty').value || '',
+      helpful: document.getElementById('home_helpful').value || '',
+      comment: document.getElementById('home_comment').value || ''
+    };
+  }
   const m1_data={
     steps,
     clinic: document.getElementById('m1-clinic').value,
     pharmacist: document.getElementById('m1-pharmacist').value,
+    er_visits: document.getElementById('m1_er_visits').value || '0',
+    home_data,
     saved: new Date().toISOString()
   };
 
@@ -949,20 +1154,82 @@ function renderDash() {
   document.getElementById('s-exp').textContent=pats.filter(p=>p.grp==='EXP').length;
   document.getElementById('s-ctrl').textContent=pats.filter(p=>p.grp==='CTRL').length;
   document.getElementById('s-m1').textContent=pats.filter(p=>p.m1_data).length;
+
+  // ── 追蹤警示橫幅 ──
+  const today=new Date(); today.setHours(0,0,0,0);
+  const getDays=d=>{if(!d)return null;const x=new Date(d);x.setHours(0,0,0,0);return Math.round((x-today)/86400000);};
+  const pending=pats.filter(p=>!p.m1_data);
+  const overdue=pending.filter(p=>p.appt_m1_date&&getDays(p.appt_m1_date)<0);
+  const urgent=pending.filter(p=>p.appt_m1_date&&getDays(p.appt_m1_date)>=0&&getDays(p.appt_m1_date)<=7);
+  const noAppt=pending.filter(p=>!p.appt_m1_date);
+  let alertHtml='';
+  if(overdue.length){
+    alertHtml+=`<div style="background:#FDEDEC;border:2px solid #A32D2D;border-radius:8px;padding:10px 16px;margin-bottom:10px;">
+      <div style="font-weight:700;color:#A32D2D;font-size:14px;margin-bottom:8px;">🚨 已超過回診日，尚未完成M1（${overdue.length}人）— 請立即電話聯繫！</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">${overdue.map(p=>{
+        const d=getDays(p.appt_m1_date);
+        return `<div style="background:#fff;border:1.5px solid #A32D2D;border-radius:6px;padding:5px 10px;font-size:12px;">
+          <strong style="color:#A32D2D;">${p.pid}</strong>
+          <span style="color:#888;margin-left:6px;">${p.appt_m1_date}</span>
+          ${p.contact_phone?`<a href="tel:${p.contact_phone}" style="margin-left:8px;color:#185FA5;font-weight:600;text-decoration:none;">📞 ${p.contact_phone}</a>`:''}
+          <span style="margin-left:8px;color:#A32D2D;font-weight:700;">逾期${Math.abs(d)}天</span>
+        </div>`;}).join('')}</div></div>`;
+  }
+  if(urgent.length){
+    alertHtml+=`<div style="background:#FEF9E7;border:2px solid #B7950B;border-radius:8px;padding:10px 16px;margin-bottom:10px;">
+      <div style="font-weight:700;color:#7D6608;font-size:14px;margin-bottom:8px;">⏰ 7天內即將回診（${urgent.length}人）— 建議提前電話確認</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">${urgent.map(p=>{
+        const d=getDays(p.appt_m1_date);
+        return `<div style="background:#fff;border:1.5px solid #B7950B;border-radius:6px;padding:5px 10px;font-size:12px;">
+          <strong style="color:#185FA5;">${p.pid}</strong>
+          <span style="color:#888;margin-left:6px;">${p.appt_m1_date}</span>
+          ${p.contact_phone?`<a href="tel:${p.contact_phone}" style="margin-left:8px;color:#185FA5;font-weight:600;text-decoration:none;">📞 ${p.contact_phone}</a>`:''}
+          <span style="margin-left:8px;color:${d===0?'#A32D2D':'#B7950B'};font-weight:700;">${d===0?'今天！':'還有'+d+'天'}</span>
+        </div>`;}).join('')}</div></div>`;
+  }
+  if(noAppt.length){
+    alertHtml+=`<div style="background:#F4F6F7;border:1.5px solid #D5D8DC;border-radius:8px;padding:8px 16px;margin-bottom:10px;font-size:12px;color:#5D6D7E;">
+      📅 尚未設定回診日（${noAppt.length}人）：${noAppt.map(p=>p.pid).join('、')} → 請在收案資料中補填</div>`;
+  }
+  document.getElementById('dash-alerts').innerHTML=alertHtml;
+
   const tb=document.getElementById('pt-body');tb.innerHTML='';
-  pats.sort((a,b)=>a.pid.localeCompare(b.pid)).forEach(p=>{
+  pats.sort((a,b)=>{
+    // 未完成且逾期優先，然後按倒數日排序
+    if(a.m1_data&&!b.m1_data)return 1;
+    if(!a.m1_data&&b.m1_data)return -1;
+    const da=a.appt_m1_date?getDays(a.appt_m1_date):9999;
+    const db2=b.appt_m1_date?getDays(b.appt_m1_date):9999;
+    return da-db2;
+  }).forEach(p=>{
     const m0p=p.m0_data?p.m0_data.steps.pct+'%':'—';
     const m1p=p.m1_data?p.m1_data.steps.pct+'%':'—';
     const satD=p.m0_data?`<span class="badge b-done">完成</span>`:`<span class="badge b-pend">未完成</span>`;
     const m1D=p.m1_data?`<span class="badge b-done">完成</span>`:`<span class="badge b-pend">待回診</span>`;
-    // 格式化 M0 日期：只顯示 YYYY-MM-DD
-    const m0date = p.m0date ? String(p.m0date).slice(0,10) : '—';
+    const m0date=p.m0date?String(p.m0date).slice(0,10):'—';
+    const days=getDays(p.appt_m1_date);
+    const isOverdue=!p.m1_data&&days!==null&&days<0;
+    const isUrgent=!p.m1_data&&days!==null&&days>=0&&days<=7;
+    let cdText='—';
+    if(p.m1_data){cdText='<span style="color:#3B6D11;font-size:11px;">✓完成</span>';}
+    else if(days===null){cdText='<span style="color:#aaa;">未設定</span>';}
+    else if(days<0){cdText=`<span style="color:#A32D2D;font-weight:700;">逾期${Math.abs(days)}天</span>`;}
+    else if(days===0){cdText=`<span style="color:#A32D2D;font-weight:700;">今天！</span>`;}
+    else if(days<=7){cdText=`<span style="color:#B7950B;font-weight:700;">${days}天後</span>`;}
+    else{cdText=`${days}天後`;}
+    const phoneCell=p.contact_phone?`<a href="tel:${p.contact_phone}" style="color:#185FA5;font-weight:600;text-decoration:none;">📞${p.contact_phone}</a>`:'—';
+    const apptCell=p.appt_m1_date?`<span style="color:${isOverdue?'#A32D2D':isUrgent?'#B7950B':'inherit'};font-weight:${isOverdue||isUrgent?700:400};">${p.appt_m1_date}</span>`:'<span style="color:#aaa;">未設定</span>';
+    const rowStyle=isOverdue?'border-left:4px solid #A32D2D;background:#FFF8F8;':isUrgent?'border-left:4px solid #B7950B;background:#FFFDF0;':'';
     const tr=document.createElement('tr');
+    tr.style.cssText=rowStyle;
     tr.innerHTML=`<td><strong>${p.pid}</strong></td>
       <td><span class="badge ${p.grp==='EXP'?'b-exp':'b-ctrl'}">${p.grp==='EXP'?'實驗組':'對照組'}</span></td>
       <td>${p.sex||'—'}</td><td>${p.age||'—'}</td><td>${p.edu||'—'}</td>
       <td>${p.county||p.area||'—'}</td><td>${p.township||'—'}</td>
       <td>${m0date}</td>
+      <td style="white-space:nowrap;">${phoneCell}</td>
+      <td style="white-space:nowrap;">${apptCell}</td>
+      <td style="white-space:nowrap;">${cdText}</td>
       <td>${p.clinic||'—'}</td><td>${p.pharmacist||'—'}</td>
       <td>${m0p}</td>
       <td>${p.m1_data?.clinic||'—'}</td><td>${p.m1_data?.pharmacist||'—'}</td><td>${m1p}</td>
@@ -1192,6 +1459,19 @@ function openSheets(){
 buildStepsTable('m0-steps-body','m0');
 buildStepsTable('m1-steps-body','m1');
 document.getElementById('m0date').value=new Date().toISOString().slice(0,10);
+
+// 預約回診倒數提示
+document.getElementById('appt_m1_date').addEventListener('change', function(){
+  const d = this.value;
+  const bar = document.getElementById('appt-countdown');
+  if(!d){bar.style.display='none';return;}
+  const today=new Date();today.setHours(0,0,0,0);
+  const appt=new Date(d);appt.setHours(0,0,0,0);
+  const days=Math.round((appt-today)/86400000);
+  bar.style.display='block';
+  bar.textContent = days<0 ? `⚠ 已逾期 ${Math.abs(days)} 天` : days===0 ? '📅 今天！' : `📅 距回診還有 ${days} 天（建議提前3–5天電話確認）`;
+  bar.style.color = days<=0?'#A32D2D':days<=7?'#7D6608':'#185FA5';
+});
 
 // 偵測 QR Code 掃描：?m1=P001 → 自動切換到 M1 並選取病患
 const urlParams = new URLSearchParams(window.location.search);
