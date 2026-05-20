@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Symbicort Rapihaler 居家衛教</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    background: #f0f7f4;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 24px 16px 40px;
+  }
+
+  /* 頂部醫院標題 */
+  .hospital-bar {
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .hospital-bar p {
+    font-size: 13px;
+    color: #5a8a78;
+    letter-spacing: 0.5px;
+  }
+  .hospital-bar h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0a5c44;
+    margin-top: 4px;
+  }
+
+  /* 主卡片 */
+  .card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 32px 24px 28px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 4px 24px rgba(10,92,68,0.10);
+  }
+
+  /* 病患資訊區 */
+  .patient-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #e8f5ef;
+    border-radius: 14px;
+    margin-bottom: 28px;
+  }
+  .patient-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: #0f6e56;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .patient-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0a5c44;
+  }
+  .patient-sub {
+    font-size: 13px;
+    color: #5a8a78;
+    margin-top: 2px;
+  }
+  .patient-id-badge {
+    margin-left: auto;
+    background: #0f6e56;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* 標題區 */
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0a5c44;
+    margin-bottom: 6px;
+  }
+  .section-sub {
+    font-size: 13px;
+    color: #6b9e8a;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  /* 播放器主體 */
+  .player-wrap {
+    background: linear-gradient(135deg, #0f6e56 0%, #1a9e76 100%);
+    border-radius: 20px;
+    padding: 28px 20px 24px;
+    margin-bottom: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .player-wrap::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+  }
+  .player-wrap::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: -20px;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+
+  .audio-icon {
+    font-size: 52px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .audio-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .audio-duration-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 20px;
+  }
+
+  /* 進度條 */
+  .progress-wrap {
+    margin-bottom: 16px;
+  }
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+    cursor: pointer;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #fff;
+    border-radius: 3px;
+    transition: width 0.5s linear;
+    width: 0%;
+  }
+  .time-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* 播放按鈕 */
+  .play-btn {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    z-index: 1;
+  }
+  .play-btn:active { transform: scale(0.93); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  .play-btn svg { width: 28px; height: 28px; fill: #0f6e56; }
+  .play-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    margin-top: 4px;
+  }
+
+  /* 隱藏原生 audio */
+  #audioEl { display: none; }
+
+  /* 步驟提示卡片 */
+  .steps-card {
+    background: #f0f9f5;
+    border: 1.5px solid #b8dfd0;
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 20px;
+  }
+  .steps-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0a5c44;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .step-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid #d4ede3;
+  }
+  .step-row:last-child { border-bottom: none; }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #0f6e56;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-text {
+    font-size: 15px;
+    color: #1a4a38;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .step-sub {
+    font-size: 12px;
+    color: #6b9e8a;
+    margin-top: 1px;
+  }
+
+  /* 狀態區 */
+  .status-bar {
+    background: #fff8e8;
+    border: 1.5px solid #f5d87a;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #7a5800;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+  }
+  .status-bar.success {
+    background: #e8f5ef;
+    border-color: #7dd4b0;
+    color: #0a5c44;
+  }
+  .status-bar.error {
+    background: #fef0f0;
+    border-color: #f5a0a0;
+    color: #7a1a1a;
+  }
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #f5c842;
+    flex-shrink: 0;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+  .status-dot.done { background: #1a9e76; animation: none; }
+  .status-dot.error { background: #e05555; animation: none; }
+  @keyframes pulse-dot {
+    0%,100%{opacity:1;} 50%{opacity:0.4;}
+  }
+
+  /* 完成提示 */
+  .complete-banner {
+    display: none;
+    background: #e8f5ef;
+    border: 2px solid #1a9e76;
+    border-radius: 16px;
+    padding: 18px 16px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .complete-banner.show { display: block; }
+  .complete-banner .big-check { font-size: 36px; margin-bottom: 6px; }
+  .complete-banner h3 { font-size: 17px; font-weight: 700; color: #0a5c44; margin-bottom: 4px; }
+  .complete-banner p { font-size: 13px; color: #5a8a78; }
+
+  /* 統計欄 */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: #f0f9f5;
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: center;
+    border: 1px solid #c8e8d8;
+  }
+  .stat-val { font-size: 22px; font-weight: 700; color: #0f6e56; }
+  .stat-lbl { font-size: 11px; color: #6b9e8a; margin-top: 2px; }
+
+  /* 底部備註 */
+  .footer-note {
+    font-size: 12px;
+    color: #8aaa9a;
+    text-align: center;
+    line-height: 1.6;
+    padding-top: 8px;
+    border-top: 1px solid #e0ede7;
+  }
+
+  /* 大字模式提示 */
+  .font-hint {
+    font-size: 12px;
+    color: #8aaa9a;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="hospital-bar">
+  <p>台大醫院雲林分院 藥劑部</p>
+  <h1>Symbicort Rapihaler 居家衛教</h1>
+</div>
+
+<div class="card">
+
+  <!-- 病患資訊 -->
+  <div class="patient-info">
+    <div class="patient-avatar">🧑‍⚕️</div>
+    <div>
+      <div class="patient-name" id="patientDisplay">載入中...</div>
+      <div class="patient-sub">居家學習音檔</div>
+    </div>
+    <div class="patient-id-badge" id="patientBadge">—</div>
+  </div>
+
+  <!-- 播放器 -->
+  <div class="section-title">🎵 吸入器使用教學音檔</div>
+  <div class="section-sub">請按下播放，跟著音檔一步一步練習正確使用方式。</div>
+
+  <div class="player-wrap">
+    <span class="audio-icon">🫁</span>
+    <div class="audio-title">Symbicort Rapihaler 操作教學</div>
+    <div class="audio-duration-label">台語版・共 1 分 44 秒</div>
+
+    <div class="progress-wrap">
+      <div class="progress-track" id="progressTrack">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="time-row">
+        <span id="timeNow">0:00</span>
+        <span id="timeTotal">1:44</span>
+      </div>
+    </div>
+
+    <button class="play-btn" id="playBtn" onclick="togglePlay()" aria-label="播放">
+      <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <div class="play-label" id="playLabel">按此播放</div>
+
+    <audio id="audioEl" preload="metadata">
+      <source src="/audio/rapihaler-teaching.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <!-- 狀態欄 -->
+  <div class="status-bar" id="statusBar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">正在記錄您的學習紀錄...</span>
+  </div>
+
+  <!-- 完成提示 -->
+  <div class="complete-banner" id="completeBanner">
+    <div class="big-check">✅</div>
+    <h3>今日學習完成！</h3>
+    <p>您的學習紀錄已自動儲存，<br>請繼續每天練習，下次回診見！</p>
+  </div>
+
+  <!-- 今日統計 -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="statCount">—</div>
+      <div class="stat-lbl">今日播放次數</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statTotal">—</div>
+      <div class="stat-lbl">累計學習天數</div>
+    </div>
+  </div>
+
+  <!-- 步驟提示 -->
+  <div class="steps-card">
+    <div class="steps-title">📋 四步驟操作重點</div>
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-text">搖晃吸入器</div>
+        <div class="step-sub">上下搖晃 3–5 次</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-text">完全呼氣</div>
+        <div class="step-sub">先把肺部空氣盡量呼出</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-text">按壓 + 深吸 + 屏氣 5 秒</div>
+        <div class="step-sub">三個動作同時進行</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-text">漱口</div>
+        <div class="step-sub">清水漱口 3 次，勿吞下</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    如有任何不適，請聯絡您的藥師。<br>
+    台大醫院雲林分院 藥劑部｜Symbicort Rapihaler 研究計畫
+  </div>
+
+</div><!-- end card -->
+
+<script>
+// ══════════════════════════════════════
+// 設定
+// ══════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8OmH1WXiwqx-Eko19KKXVffu89jz-w2opkc6hI1hf2nSB13_FGWkUynA7uWPkFP8/exec';
+
+// 從 URL 取得病患 ID，例如 ?p=EXP-001
+const params = new URLSearchParams(window.location.search);
+const patientId = params.get('p') || 'UNKNOWN';
+
+// ══════════════════════════════════════
+// 初始化顯示
+// ══════════════════════════════════════
+document.getElementById('patientBadge').textContent = patientId;
+document.getElementById('patientDisplay').textContent =
+  patientId !== 'UNKNOWN' ? '居家學習模式' : '測試模式';
+
+// ══════════════════════════════════════
+// 音檔播放器
+// ══════════════════════════════════════
+const audio = document.getElementById('audioEl');
+const playBtn = document.getElementById('playBtn');
+const playIcon = document.getElementById('playIcon');
+const playLabel = document.getElementById('playLabel');
+const progressFill = document.getElementById('progressFill');
+const timeNow = document.getElementById('timeNow');
+const timeTotal = document.getElementById('timeTotal');
+
+let isPlaying = false;
+let playStartTime = null;
+let totalListenSec = 0;
+let sessionSent = false;
+let openEventSent = false;
+
+const PLAY_SVG = '<path d="M8 5v14l11-7z"/>';
+const PAUSE_SVG = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+audio.addEventListener('loadedmetadata', () => {
+  timeTotal.textContent = fmtTime(audio.duration);
+});
+
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  progressFill.style.width = pct + '%';
+  timeNow.textContent = fmtTime(audio.currentTime);
+});
+
+audio.addEventListener('ended', () => {
+  isPlaying = false;
+  playIcon.innerHTML = PLAY_SVG;
+  playLabel.textContent = '再聽一次';
+  progressFill.style.width = '100%';
+  // 送出完成事件
+  const listenSec = playStartTime ? Math.round((Date.now() - playStartTime) / 1000) : 0;
+  totalListenSec += listenSec;
+  playStartTime = null;
+  sendEvent('complete', totalListenSec);
+  showComplete();
+});
+
+function togglePlay() {
+  if (isPlaying) {
+    audio.pause();
+    isPlaying = false;
+    playIcon.innerHTML = PLAY_SVG;
+    playLabel.textContent = '繼續播放';
+    // 累計已聽秒數
+    if (playStartTime) {
+      totalListenSec += Math.round((Date.now() - playStartTime) / 1000);
+      playStartTime = null;
+    }
+  } else {
+    audio.play();
+    isPlaying = true;
+    playIcon.innerHTML = PAUSE_SVG;
+    playLabel.textContent = '暫停';
+    playStartTime = Date.now();
+    // 第一次按播放時送出 play 事件
+    if (!sessionSent) {
+      sendEvent('play', 0);
+      sessionSent = true;
+    }
+  }
+}
+
+// 點擊進度條跳轉
+document.getElementById('progressTrack').addEventListener('click', function(e) {
+  if (!audio.duration) return;
+  const rect = this.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  audio.currentTime = ratio * audio.duration;
+});
+
+// ══════════════════════════════════════
+// 追蹤事件送出
+// ══════════════════════════════════════
+function sendEvent(eventType, durationSec) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('zh-TW', {
+    year:'numeric', month:'2-digit', day:'2-digit'
+  }).replace(/\//g, '-');
+
+  const payload = {
+    action: 'nfc_track',
+    patient_id: patientId,
+    event_type: eventType,
+    duration_sec: durationSec,
+    date: dateStr,
+    timestamp: now.toLocaleString('zh-TW')
+  };
+
+  fetch(SCRIPT_URL + '?action=nfc_track' +
+    '&patient_id=' + encodeURIComponent(patientId) +
+    '&event_type=' + encodeURIComponent(eventType) +
+    '&duration_sec=' + durationSec +
+    '&date=' + encodeURIComponent(dateStr) +
+    '&timestamp=' + encodeURIComponent(now.toLocaleString('zh-TW')),
+    { method: 'GET', mode: 'no-cors' }
+  ).then(() => {
+    if (eventType === 'open' || eventType === 'play') {
+      setStatus('success', '✅ 學習紀錄已記錄');
+    }
+    if (eventType === 'complete') {
+      setStatus('success', '✅ 完整學習紀錄已儲存（' + durationSec + ' 秒）');
+    }
+    loadStats();
+  }).catch(() => {
+    setStatus('error', '⚠️ 網路異常，請確認網路後重試');
+  });
+}
+
+function setStatus(type, msg) {
+  const bar = document.getElementById('statusBar');
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  bar.className = 'status-bar ' + (type || '');
+  dot.className = 'status-dot ' + (type === 'success' ? 'done' : type === 'error' ? 'error' : '');
+  txt.textContent = msg;
+}
+
+function showComplete() {
+  document.getElementById('completeBanner').classList.add('show');
+}
+
+// ══════════════════════════════════════
+// 載入今日統計（從 Sheets 查詢）
+// ══════════════════════════════════════
+function loadStats() {
+  fetch(SCRIPT_URL + '?action=nfc_stats&patient_id=' + encodeURIComponent(patientId),
+    { method: 'GET', mode: 'no-cors' }
+  ).catch(() => {});
+  // no-cors 無法讀回 response，顯示本地計數
+  // 實際統計從 M1 後台的 Sheets 查詢
+}
+
+// ══════════════════════════════════════
+// 頁面載入：送出 open 事件
+// ══════════════════════════════════════
+window.addEventListener('load', () => {
+  if (patientId && patientId !== 'UNKNOWN') {
+    sendEvent('open', 0);
+    openEventSent = true;
+  } else {
+    setStatus('error', '⚠️ 未偵測到病患代碼，請透過 NFC 貼紙開啟此頁面');
+  }
+});
+
+// 離開頁面時送出已聽秒數
+window.addEventListener('beforeunload', () => {
+  if (isPlaying && playStartTime) {
+    totalListenSec += Math.round((Date.now() - playStartTime) / 1000);
+  }
+  if (totalListenSec > 2 && !sessionSent) {
+    sendEvent('close', totalListenSec);
+  }
+});
+</script>
+</body>
+</html>
