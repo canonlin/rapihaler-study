@@ -895,12 +895,12 @@ function onM1PidChange() {
               if(res.status === 'ok' && res.data) {
                 const d = res.data;
                 document.getElementById('home_nfc_clicks').value = d.total_clicks || '';
-                document.getElementById('home_first_access').value = d.first_date || '';
-                document.getElementById('home_last_access').value = d.last_date || '';
+                document.getElementById('home_first_access').value = d.first_date ? d.first_date.substring(0,10) : '';
+                document.getElementById('home_last_access').value = d.last_date ? d.last_date.substring(0,10) : '';
                 const calcBar = document.getElementById('home-calc-bar');
                 if(calcBar) {
                   calcBar.style.display = 'block';
-                  calcBar.innerHTML = '📡 NFC自動帶入：點擊 <strong>' + (d.total_clicks||0) + '</strong> 次・學習天數 <strong>' + (d.unique_days||0) + '</strong> 天・連續 <strong>' + (d.streak_days||0) + '</strong> 天・最後學習 <strong>' + (d.last_date||'—') + '</strong>';
+                  calcBar.innerHTML = '📡 NFC自動帶入：點擊 <strong>' + (d.total_clicks||0) + '</strong> 次・學習天數 <strong>' + (d.unique_days||0) + '</strong> 天・連續 <strong>' + (d.streak_days||0) + '</strong> 天・最後學習 <strong>' + (d.last_date ? d.last_date.substring(0,10) : '—') + '</strong>';
                 }
               }
             }).catch(()=>{});
