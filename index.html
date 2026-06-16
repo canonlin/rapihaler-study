@@ -414,18 +414,18 @@
               <input type="number" id="home_qr_clicks" min="0" placeholder="從 Bitly / GA 後台查詢" />
             </div>
             <div class="form-group">
-              <label>NFC 語音藥袋 — 點擊總次數（自動）</label>
-              <input type="number" id="home_nfc_clicks" min="0" placeholder="自動載入中..." readonly style="background:#f0f7f4;color:#0a5c44;font-weight:600;" />
+              <label>NFC 語音藥袋 — 點擊總次數（後台）</label>
+              <input type="number" id="home_nfc_clicks" min="0" placeholder="從 Bitly / GA 後台查詢" />
             </div>
           </div>
           <div class="form-row c2">
             <div class="form-group">
-              <label>首次使用日期（自動）</label>
-              <input type="date" id="home_first_access" readonly style="background:#f0f7f4;color:#0a5c44;font-weight:600;" />
+              <label>首次使用日期（後台）</label>
+              <input type="date" id="home_first_access" />
             </div>
             <div class="form-group">
-              <label>最後使用日期（自動）</label>
-              <input type="date" id="home_last_access" readonly style="background:#f0f7f4;color:#0a5c44;font-weight:600;" />
+              <label>最後使用日期（後台）</label>
+              <input type="date" id="home_last_access" />
             </div>
           </div>
           <div id="home-calc-bar" style="display:none;padding:8px 12px;background:#EBF5FB;border-radius:6px;font-size:12px;color:#185FA5;"></div>
@@ -565,29 +565,94 @@
 
 <!-- QR Code 病患小卡 Modal -->
 <div class="modal-bg hidden" id="qr-modal">
-  <div class="modal" style="max-width:340px;text-align:center;">
+  <div class="modal" style="max-width:380px;text-align:center;">
     <div style="background:var(--primary);color:white;border-radius:var(--border-radius,8px);padding:12px 16px;margin:-1.5rem -1.5rem 1rem;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:2px;">收案成功！請列印此小卡給病患</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:2px;">✅ 收案成功！請列印此小卡給病患保存</div>
       <div style="font-size:11px;opacity:0.8;">病患保留此卡，回診時掃描 QR Code</div>
     </div>
-    <div id="qr-card-area" style="border:2px dashed var(--border);border-radius:8px;padding:16px;margin-bottom:1rem;background:white;">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">研究計畫 Symbicort Rapihaler</div>
-      <div id="qr-pid" style="font-size:24px;font-weight:700;color:var(--primary);letter-spacing:2px;margin-bottom:4px;"></div>
-      <div id="qr-grp" style="font-size:12px;margin-bottom:8px;"></div>
-      <div id="qr-container" style="display:flex;justify-content:center;align-items:center;margin:8px auto;min-height:150px;"></div>
-      <div style="font-size:10px;color:var(--text2);">掃描此 QR Code 進行 M1 回診評估</div>
-      <div id="qr-m0date" style="font-size:10px;color:var(--text2);margin-top:2px;"></div>
-      <!-- M1 研究評估預計日（電腦計算） -->
-      <div id="qr-m1date" style="font-size:10px;font-weight:600;color:#3B6D11;margin-top:6px;background:#EAF3DE;border-radius:4px;padding:4px 10px;display:inline-block;"></div>
-      <!-- 下次預約回診時間（藥師手填） -->
-      <div style="margin-top:8px;border-top:1px dashed #ccc;padding-top:8px;">
-        <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">下次預約回診時間（請藥師填寫）</div>
-        <div style="border-bottom:1px solid #333;width:140px;height:18px;margin:0 auto;"></div>
+
+    <div id="qr-card-area" style="border:2px dashed #aaa;border-radius:10px;padding:16px 18px;margin-bottom:1rem;background:white;text-align:center;font-family:Arial,sans-serif;">
+
+      <!-- 標題 -->
+      <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:2px;">台大醫院雲林分院 藥劑部 研究計畫</div>
+      <div style="font-size:13px;font-weight:700;color:#185FA5;margin-bottom:6px;">Symbicort Rapihaler 吸入劑衛教研究</div>
+
+      <!-- 病患代碼 + 組別 -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">
+        <div id="qr-pid" style="font-size:26px;font-weight:800;color:#185FA5;letter-spacing:3px;"></div>
+        <div id="qr-grp" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#EBF5FB;color:#185FA5;"></div>
       </div>
-      <div style="font-size:9px;color:var(--text3);margin-top:6px;">台大醫院雲林分院 藥劑部</div>
+
+      <!-- QR Code -->
+      <div id="qr-container" style="display:flex;justify-content:center;align-items:center;margin:6px auto;min-height:140px;"></div>
+      <div style="font-size:10px;color:#888;margin-bottom:2px;">掃描 QR Code 進行 M1 回診評估</div>
+
+      <!-- 日期資訊 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0;">
+        <div style="background:#F0F4F8;border-radius:6px;padding:5px 8px;">
+          <div style="font-size:9px;color:#888;">M0 收案日期</div>
+          <div id="qr-m0date" style="font-size:11px;font-weight:700;color:#333;"></div>
+        </div>
+        <div style="background:#EAF3DE;border-radius:6px;padding:5px 8px;">
+          <div style="font-size:9px;color:#3B6D11;">📅 M1 預計回診日</div>
+          <div id="qr-m1date" style="font-size:11px;font-weight:700;color:#3B6D11;"></div>
+        </div>
+      </div>
+
+      <!-- 分隔線 -->
+      <div style="border-top:1.5px dashed #ddd;margin:8px 0;"></div>
+
+      <!-- 4步驟提醒 -->
+      <div style="font-size:10px;font-weight:700;color:#185FA5;margin-bottom:5px;">🫁 每次使用吸入劑請記得4步驟：</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;">
+        <div style="background:#EBF5FB;border-radius:5px;padding:4px 6px;font-size:10px;color:#185FA5;">① 振搖 5秒</div>
+        <div style="background:#EBF5FB;border-radius:5px;padding:4px 6px;font-size:10px;color:#185FA5;">② 深吐氣</div>
+        <div style="background:#EBF5FB;border-radius:5px;padding:4px 6px;font-size:10px;color:#185FA5;">③ 壓吸憋 5–10秒</div>
+        <div style="background:#EBF5FB;border-radius:5px;padding:4px 6px;font-size:10px;color:#185FA5;">④ 漱口</div>
+      </div>
+
+      <!-- NFC 提醒（實驗組） -->
+      <div id="qr-nfc-remind" style="display:none;background:#FEF9E7;border:1px solid #F0C040;border-radius:6px;padding:5px 8px;margin-bottom:6px;">
+        <div style="font-size:10px;color:#7D6608;font-weight:700;">📲 忘記步驟？點藥袋上的 NFC 貼紙聽語音說明</div>
+        <div style="font-size:9px;color:#999;margin-top:2px;">或掃描以下 QR Code 看教學影片</div>
+        <div id="qr-video-container" style="display:flex;justify-content:center;margin-top:4px;"></div>
+      </div>
+
+      <!-- 預約回診填寫欄 -->
+      <div style="border-top:1.5px dashed #ddd;padding-top:7px;margin-top:2px;">
+        <div style="font-size:10px;color:#888;margin-bottom:5px;">📞 有問題請聯絡藥師：</div>
+        <div id="qr-appt-info" style="font-size:10px;color:#333;"></div>
+        <div style="margin-top:5px;">
+          <div style="font-size:10px;color:#555;margin-bottom:3px;">✏ 下次預約回診時間（藥師填寫）：</div>
+          <div style="border-bottom:1.5px solid #555;width:160px;height:18px;margin:0 auto;"></div>
+        </div>
+      </div>
+
+      <div style="font-size:9px;color:#bbb;margin-top:6px;">台大醫院雲林分院 藥劑部 研究專用</div>
     </div>
+
+    <!-- NFC 寫入網址區塊（實驗組才顯示） -->
+    <div id="nfc-url-box" style="display:none;margin-bottom:12px;background:#F0F9F5;border:1.5px solid #7dd4b0;border-radius:10px;padding:12px 14px;">
+      <div style="font-size:12px;font-weight:700;color:#0a5c44;margin-bottom:8px;">📲 NFC 貼紙寫入網址</div>
+      <div style="font-size:11px;color:#5a8a78;margin-bottom:8px;line-height:1.6;">
+        收案完成後，用 <strong>NFC Tools App</strong> 將以下網址寫入 NFC 貼紙，貼在病患藥袋上。
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="nfc-url-text" style="flex:1;font-size:12px;font-weight:600;color:#0f6e56;background:#fff;border:1px solid #b8dfd0;border-radius:6px;padding:8px 10px;word-break:break-all;font-family:monospace;"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button onclick="copyNfcUrl()" id="copy-btn" style="flex:1;padding:9px;background:#0f6e56;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+          📋 複製網址
+        </button>
+        <button onclick="openNfcTools()" style="flex:1;padding:9px;background:#fff;color:#0f6e56;border:2px solid #0f6e56;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+          🔗 開啟 NFC Tools
+        </button>
+      </div>
+      <div id="copy-ok" style="display:none;text-align:center;color:#0a5c44;font-size:12px;font-weight:600;margin-top:6px;">✅ 已複製！貼到 NFC Tools App 即可</div>
+    </div>
+
     <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="btn btn-primary" onclick="printQR()">列印小卡</button>
+      <button class="btn btn-primary" onclick="printQR()">🖨 列印小卡</button>
       <button class="btn" onclick="closeQR()">關閉</button>
     </div>
   </div>
@@ -887,24 +952,7 @@ function onM1PidChange() {
       document.getElementById('home_helpful_val').textContent = hd.helpful || 5;
       document.getElementById('home_comment').value = hd.comment || '';
       if(hd.likert) fillLikert('home', hd.likert, HOME_Q.length);
-    }// 自動從 NFC_summary 帶入居家學習資料（實驗組）
-        if(p && p.grp === 'EXP') {
-          fetch(API_URL + '?action=nfc_stats&patient_id=' + encodeURIComponent(pid))
-            .then(r => r.json())
-            .then(res => {
-              if(res.status === 'ok' && res.data) {
-                const d = res.data;
-                document.getElementById('home_nfc_clicks').value = d.total_clicks || '';
-                document.getElementById('home_first_access').value = d.first_date ? d.first_date.substring(0,10) : '';
-                document.getElementById('home_last_access').value = d.last_date ? d.last_date.substring(0,10) : '';
-                const calcBar = document.getElementById('home-calc-bar');
-                if(calcBar) {
-                  calcBar.style.display = 'block';
-                  calcBar.innerHTML = '📡 NFC自動帶入：點擊 <strong>' + (d.total_clicks||0) + '</strong> 次・學習天數 <strong>' + (d.unique_days||0) + '</strong> 天・連續 <strong>' + (d.streak_days||0) + '</strong> 天・最後學習 <strong>' + (d.last_date ? d.last_date.substring(0,10) : '—') + '</strong>';
-                }
-              }
-            }).catch(()=>{});
-        }
+    }
     // Auto-calc usage span
     document.getElementById('home_first_access').addEventListener('change', updateHomeCalc);
     document.getElementById('home_last_access').addEventListener('change', updateHomeCalc);
@@ -980,11 +1028,19 @@ function updateEnrollPreview() {
   document.getElementById('progress-bar').style.width = (total) + '%';
 
   if (!next) {
-    document.getElementById('next-pid').textContent = '已完成';
-    document.getElementById('next-grp').textContent = '—';
-    document.getElementById('next-grp-sub').textContent = '收案已達100人上限';
+    document.getElementById('next-pid').textContent = '100';
+    document.getElementById('next-grp').textContent = '已滿';
+    document.getElementById('next-grp').style.color = '#A32D2D';
+    document.getElementById('next-grp-sub').innerHTML = '<span style="color:#A32D2D;background:#FDEDEC;padding:2px 8px;border-radius:10px;font-size:11px;">收案已達100人上限</span>';
+    // 鎖住收案按鈕
+    const btn = document.getElementById('btn-register');
+    if(btn){ btn.disabled = true; btn.style.opacity='0.4'; btn.style.cursor='not-allowed'; btn.textContent='收案已達上限'; }
     return;
   }
+
+  // 恢復按鈕
+  const btn = document.getElementById('btn-register');
+  if(btn){ btn.disabled = false; btn.style.opacity=''; btn.style.cursor=''; btn.textContent='確認收案 →（系統自動編號分組）'; }
 
   document.getElementById('next-pid').textContent = next.pid;
 
@@ -1315,34 +1371,121 @@ function dlCSV(fn,rows){
 // ════════════════════════════════════════
 function showPatientQR(pid, grp, m0date) {
   document.getElementById('qr-pid').textContent = pid;
-  const grpLabel = grp === 'EXP' ? '實驗組' : '對照組';
+  const grpLabel = grp === 'EXP' ? '🔬 實驗組' : '📋 對照組';
   const grpColor = grp === 'EXP' ? '#185FA5' : '#3B6D11';
+  const grpBg    = grp === 'EXP' ? '#EBF5FB' : '#EAF3DE';
   const grpEl = document.getElementById('qr-grp');
   grpEl.textContent = grpLabel;
   grpEl.style.color = grpColor;
+  grpEl.style.background = grpBg;
 
   // M0 日期
-  const m0str = m0date ? String(m0date).slice(0,10) : '';
-  document.getElementById('qr-m0date').textContent = m0str ? `M0 收案日期：${m0str}` : '';
+  const m0str = m0date ? String(m0date).slice(0,10) : '—';
+  document.getElementById('qr-m0date').textContent = m0str;
 
   // M1 預計回診日（M0 + 30天）
-  if (m0str) {
+  if (m0str && m0str !== '—') {
     const m1est = new Date(m0str);
     m1est.setDate(m1est.getDate() + 30);
-    const m1str = m1est.toISOString().slice(0,10);
-    document.getElementById('qr-m1date').textContent = `🔬 M1 研究評估預計日：${m1str}`;
+    document.getElementById('qr-m1date').textContent = m1est.toISOString().slice(0,10);
   } else {
-    document.getElementById('qr-m1date').textContent = '';
+    document.getElementById('qr-m1date').textContent = '—';
   }
 
-  // QR Code URL：掃描後帶入 pid 參數自動進入 M1
+  // 實驗組：顯示 NFC 提醒區塊
+  const nfcRemind = document.getElementById('qr-nfc-remind');
+  if(grp === 'EXP') {
+    nfcRemind.style.display = 'block';
+    // 畫教學影片 QR（指向你的影片網址）
+    const videoUrl = 'https://rapihaler-study.vercel.app/audio.html?p=' + pid;
+    const vc = document.getElementById('qr-video-container');
+    vc.innerHTML = '';
+    if(typeof QRCode !== 'undefined') {
+      new QRCode(vc, { text: videoUrl, width: 80, height: 80, colorDark:'#185FA5', colorLight:'#ffffff' });
+    }
+  } else {
+    nfcRemind.style.display = 'none';
+  }
+
+  // 預約回診資訊（從收案表單讀取）
+  const apptDate = document.getElementById('appt_m1_date')?.value || '';
+  const apptNote = document.getElementById('appt_note')?.value || '';
+  const contactPhone = document.getElementById('contact_phone')?.value || '';
+  const apptEl = document.getElementById('qr-appt-info');
+  let apptHtml = '';
+  if(contactPhone) apptHtml += `📞 ${contactPhone}`;
+  if(apptDate) apptHtml += `<br>🗓 預約回診：<strong>${apptDate}</strong>`;
+  if(apptNote) apptHtml += `<br>📝 ${apptNote}`;
+  apptEl.innerHTML = apptHtml || '（請向藥師詢問）';
+
+  // M1回診 QR Code
   const qrUrl = 'https://rapihaler-study.vercel.app/?m1=' + pid;
   drawQR(qrUrl);
+
+  // NFC 網址區塊（實驗組才顯示）
+  const nfcBox = document.getElementById('nfc-url-box');
+  const nfcUrlText = document.getElementById('nfc-url-text');
+  if(grp === 'EXP') {
+    const nfcUrl = 'https://rapihaler-study.vercel.app/audio.html?p=' + pid;
+    nfcUrlText.textContent = nfcUrl;
+    nfcBox.style.display = 'block';
+    // 儲存目前網址供複製用
+    nfcBox.dataset.url = nfcUrl;
+  } else {
+    nfcBox.style.display = 'none';
+  }
+
   document.getElementById('qr-modal').classList.remove('hidden');
 }
 
 function closeQR() {
   document.getElementById('qr-modal').classList.add('hidden');
+  document.getElementById('copy-ok').style.display = 'none';
+  document.getElementById('copy-btn').textContent = '📋 複製網址';
+}
+
+function copyNfcUrl() {
+  const url = document.getElementById('nfc-url-box').dataset.url;
+  if(!url) return;
+  // 複製到剪貼簿
+  if(navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      showCopyOk();
+    }).catch(() => fallbackCopy(url));
+  } else {
+    fallbackCopy(url);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); showCopyOk(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function showCopyOk() {
+  const btn = document.getElementById('copy-btn');
+  const ok  = document.getElementById('copy-ok');
+  btn.textContent = '✅ 已複製！';
+  btn.style.background = '#1a9e76';
+  ok.style.display = 'block';
+  setTimeout(() => {
+    btn.textContent = '📋 複製網址';
+    btn.style.background = '#0f6e56';
+    ok.style.display = 'none';
+  }, 3000);
+}
+
+function openNfcTools() {
+  const url = document.getElementById('nfc-url-box').dataset.url;
+  // 嘗試開啟 NFC Tools App（iOS/Android deep link）
+  // 若未安裝則導向 App Store 說明
+  window.open('https://www.wakdev.com/en/apps/nfc-tools.html', '_blank');
 }
 
 function printQR() {
@@ -1351,13 +1494,19 @@ function printQR() {
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>病患QR小卡</title>
     <style>
-      body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;background:white;}
-      .card{border:2px dashed #ccc;border-radius:8px;padding:20px;text-align:center;width:220px;}
-      canvas,img{display:block;margin:8px auto;}
-      @media print{body{margin:0;}.card{border:2px dashed #999;}}
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,"Microsoft JhengHei",sans-serif;background:white;}
+      .card{border:2px dashed #aaa;border-radius:10px;padding:16px 18px;text-align:center;width:260px;}
+      canvas,img{display:block;margin:6px auto;}
+      .card>div{margin-bottom:2px;}
+      @media print{
+        body{margin:0;}
+        .card{border:2px dashed #999;box-shadow:none;}
+        @page{size:A6;margin:8mm;}
+      }
     </style></head><body>
     <div class="card">${area}</div>
-    <script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>
+    <script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script>
     </body></html>`);
   win.document.close();
 }
