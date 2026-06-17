@@ -1307,7 +1307,10 @@ function renderDash() {
       <td>${m0p}</td>
       <td>${p.m1_data?.clinic||'—'}</td><td>${p.m1_data?.pharmacist||'—'}</td><td>${m1p}</td>
       <td>${satD}</td><td>${m1D}</td>
-      <td><button class="btn" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger);" onclick="askDelete('${p.pid}')">刪除</button></td>`;
+      <td style="white-space:nowrap;">
+        ${p.grp==='EXP'?`<button class="btn" style="font-size:11px;padding:3px 10px;background:#185FA5;color:white;border-color:#185FA5;margin-bottom:4px;" onclick="openAiCoach('${p.pid}')">🤖 AI衛教</button><br>`:''}
+        <button class="btn" style="font-size:11px;padding:3px 10px;color:var(--danger);border-color:var(--danger);" onclick="askDelete('${p.pid}')">刪除</button>
+      </td>\`;
     tb.appendChild(tr);
   });
 }
@@ -1320,6 +1323,11 @@ function renderDash() {
 const DELETE_PASSWORD = 'Kitty0911857124@6'; // ← 管理員刪除密碼
 
 let pendingPid = null;
+
+function openAiCoach(pid) {
+  const url = 'https://inhaler-coach.vercel.app?id=' + pid;
+  window.open(url, '_blank');
+}
 
 function askDelete(pid) {
   pendingPid = pid;
